@@ -1,9 +1,12 @@
 package pt.ulisboa.tecnico.cmov.triviawinner;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.hardware.display.DisplayManager;
@@ -17,22 +20,38 @@ import android.os.Looper;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.Display;
+import android.widget.Toast;
+
+import com.android.volley.DefaultRetryPolicy;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.google.android.gms.vision.Frame;
+import com.google.android.gms.vision.text.TextBlock;
+import com.google.android.gms.vision.text.TextRecognizer;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.text.MessageFormat;
 
 public class ScreenshotActivity extends Activity {
 
     private static final String TAG = ScreenshotActivity.class.getName();
     private static final int REQUEST_CODE = 100;
-    private static String STORE_DIRECTORY;
     private static int IMAGES_PRODUCED;
     private static final String SCREENCAP_NAME = "screencap";
     private static final int VIRTUAL_DISPLAY_FLAGS = DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY | DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
     private static MediaProjection sMediaProjection;
+    Bitmap bitmap = null;
+    final static String MY_ACTION = "MY_ACTION";
+
 
     private MediaProjectionManager mProjectionManager;
     private ImageReader mImageReader;
@@ -47,51 +66,33 @@ public class ScreenshotActivity extends Activity {
         @Override
         public void onImageAvailable(ImageReader reader) {
             Image image = null;
-            FileOutputStream fos = null;
-            Bitmap bitmap = null;
+            if (bitmap == null) {
+                try {
+                    image = reader.acquireLatestImage();
+                    if (image != null) {
+                        Image.Plane[] planes = image.getPlanes();
+                        ByteBuffer buffer = planes[0].getBuffer();
+                        int pixelStride = planes[0].getPixelStride();
+                        int rowStride = planes[0].getRowStride();
+                        int rowPadding = rowStride - pixelStride * mWidth;
 
-            try {
-                image = reader.acquireLatestImage();
-                if (image != null) {
-                    Image.Plane[] planes = image.getPlanes();
-                    ByteBuffer buffer = planes[0].getBuffer();
-                    int pixelStride = planes[0].getPixelStride();
-                    int rowStride = planes[0].getRowStride();
-                    int rowPadding = rowStride - pixelStride * mWidth;
+                        // create bitmap
+                        bitmap = Bitmap.createBitmap(mWidth + rowPadding / pixelStride, mHeight, Bitmap.Config.ARGB_8888);
+                        bitmap.copyPixelsFromBuffer(buffer);
 
-                    // create bitmap
-                    bitmap = Bitmap.createBitmap(mWidth + rowPadding / pixelStride, mHeight, Bitmap.Config.ARGB_8888);
-                    bitmap.copyPixelsFromBuffer(buffer);
+                        IMAGES_PRODUCED++;
+                        Log.e(TAG, "captured image: " + IMAGES_PRODUCED);
 
-                    // write bitmap to a file
-                    //fos = new FileOutputStream(STORE_DIRECTORY + "/myscreen_" + IMAGES_PRODUCED + ".png");
-                    fos = new FileOutputStream(STORE_DIRECTORY + "/myscreen" + ".png");
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
-
-                    IMAGES_PRODUCED++;
-                    Log.e(TAG, "captured image: " + IMAGES_PRODUCED);
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                if (fos != null) {
-                    try {
-                        fos.close();
-                    } catch (IOException ioe) {
-                        ioe.printStackTrace();
+                        readImage(bitmap);
+                        stopProjection();
                     }
-                }
-
-                if (bitmap != null) {
-                    bitmap.recycle();
-                }
-
-                if (image != null) {
-                    image.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    if (image != null)
+                        image.close();
                 }
             }
-            stopProjection();
         }
     }
 
@@ -140,22 +141,6 @@ public class ScreenshotActivity extends Activity {
             sMediaProjection = mProjectionManager.getMediaProjection(resultCode, data);
 
             if (sMediaProjection != null) {
-                File externalFilesDir = getExternalFilesDir(null);
-                if (externalFilesDir != null) {
-                    STORE_DIRECTORY = externalFilesDir.getAbsolutePath() + "/screenshots/";
-                    File storeDirectory = new File(STORE_DIRECTORY);
-                    if (!storeDirectory.exists()) {
-                        boolean success = storeDirectory.mkdirs();
-                        if (!success) {
-                            Log.e(TAG, "failed to create file storage directory.");
-                            return;
-                        }
-                    }
-                } else {
-                    Log.e(TAG, "failed to create file storage directory, getExternalFilesDir is null.");
-                    return;
-                }
-
                 // display metrics
                 DisplayMetrics metrics = getResources().getDisplayMetrics();
                 mDensity = metrics.densityDpi;
@@ -196,8 +181,46 @@ public class ScreenshotActivity extends Activity {
         mHeight = size.y;
 
         // start capture reader
-        mImageReader = ImageReader.newInstance(mWidth, mHeight, PixelFormat.RGBA_8888, 2);
+        mImageReader = ImageReader.newInstance(mWidth, mHeight, PixelFormat.RGBA_8888, 1);
         mVirtualDisplay = sMediaProjection.createVirtualDisplay(SCREENCAP_NAME, mWidth, mHeight, mDensity, VIRTUAL_DISPLAY_FLAGS, mImageReader.getSurface(), null, mHandler);
         mImageReader.setOnImageAvailableListener(new ImageAvailableListener(), mHandler);
+    }
+
+    public void readImage(Bitmap bitmap){
+        TextRecognizer textRecognizer = new TextRecognizer.Builder(getApplicationContext()).build();
+        Frame imageFrame = new Frame.Builder()
+                .setBitmap(bitmap)
+                .build();
+
+        String question = "";
+        String opts = "";
+        boolean parsed = false;
+
+        SparseArray<TextBlock> textBlocks = textRecognizer.detect(imageFrame);
+
+        int n_of_opts = 0;
+        for (int i = 0; i < textBlocks.size(); i++) {
+            String text = textBlocks.get(textBlocks.keyAt(i)).getValue().toLowerCase();
+            if (parsed){
+                if (n_of_opts < 3 && !text.contains("prize for") && !text.contains("$")) {
+                    opts += text + ",";
+                    n_of_opts++;
+                }
+            }
+            else if (text.length() > 24){
+                question = text;
+                parsed = true;
+            }
+        }
+
+        opts = opts.replaceAll("\n",",");
+        opts = opts.substring(0, opts.length() - 1);
+        question = question.replaceAll("\n"," ");
+
+        Intent intent = new Intent();
+        intent.setAction(MY_ACTION);
+        intent.putExtra("question", question);
+        intent.putExtra("opts", opts);
+        sendBroadcast(intent);
     }
 }

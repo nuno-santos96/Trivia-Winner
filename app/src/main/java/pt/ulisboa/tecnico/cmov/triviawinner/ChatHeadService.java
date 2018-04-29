@@ -1,19 +1,26 @@
 package pt.ulisboa.tecnico.cmov.triviawinner;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.os.IBinder;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.Toast;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -31,12 +38,14 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 
 public class ChatHeadService extends Service {
 
     private WindowManager mWindowManager;
     private View mChatHeadView;
+    BroadcastReceiver myReceiver;
 
     public ChatHeadService() {
     }
@@ -52,6 +61,18 @@ public class ChatHeadService extends Service {
         //Inflate the chat head layout we created
         mChatHeadView = LayoutInflater.from(this).inflate(R.layout.layout_chat_head, null);
 
+        myReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String question = intent.getStringExtra("question");
+                String opts = intent.getStringExtra("opts");
+                sendServerRequest(question,opts);
+            }
+        };
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ScreenshotActivity.MY_ACTION);
+        registerReceiver(myReceiver, intentFilter);
+
         //Add the view to the window.
         final WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -61,14 +82,14 @@ public class ChatHeadService extends Service {
                 PixelFormat.TRANSLUCENT);
 
         //Specify the chat head position
-        params.gravity = Gravity.TOP | Gravity.RIGHT;
+        params.gravity = Gravity.TOP | Gravity.END;
 
         //Add the view to the window
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         mWindowManager.addView(mChatHeadView, params);
 
         //Set the close button.
-        ImageView closeButton = (ImageView) mChatHeadView.findViewById(R.id.close_btn);
+        ImageView closeButton = mChatHeadView.findViewById(R.id.close_btn);
         closeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -78,12 +99,12 @@ public class ChatHeadService extends Service {
         });
 
         //Drag and move chat head using user's touch action.
-        final ImageView chatHeadImage = (ImageView) mChatHeadView.findViewById(R.id.chat_head_profile_iv);
+        final ImageView chatHeadImage = mChatHeadView.findViewById(R.id.chat_head_profile_iv);
         chatHeadImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                takeScreenshot();
-                readImage();
+                Intent intent = new Intent(getBaseContext(), ScreenshotActivity.class);
+                startActivity(intent);
             }
         });
     }
@@ -92,127 +113,37 @@ public class ChatHeadService extends Service {
     public void onDestroy() {
         super.onDestroy();
         if (mChatHeadView != null) mWindowManager.removeView(mChatHeadView);
+        if (myReceiver != null) unregisterReceiver(myReceiver);
     }
 
-    public void takeScreenshot(){
-        Intent intent = new Intent(this, ScreenshotActivity.class);
-        startActivity(intent);
-    }
+    public void sendServerRequest(String question, String opts){
+        Object[] params = new Object[] {getString(R.string.DEFAULT_PROTOCOL),
+                getString(R.string.DEFAULT_IP),
+                getString(R.string.DEFAULT_PORT),
+                question,
+                opts};
+        String url = MessageFormat.format("{0}://{1}:{2}/?q={3}&o={4}", params);
 
-    public void readImage(){
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                BitmapFactory.Options options = new BitmapFactory.Options();
-                options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-                Bitmap bitmap = BitmapFactory.decodeFile(getExternalFilesDir(null).getAbsolutePath() + "/screenshots/myscreen.png", options);
-
-                TextRecognizer textRecognizer = new TextRecognizer.Builder(getApplicationContext()).build();
-                Frame imageFrame = new Frame.Builder()
-                        .setBitmap(bitmap)  // your image bitmap
-                        .build();
-
-                String imageText = "";
-                String question = "";
-                ArrayList<String> opts = new ArrayList<>();
-                boolean parsed = false;
-
-                SparseArray<TextBlock> textBlocks = textRecognizer.detect(imageFrame);
-
-                for (int i = 0; i < textBlocks.size(); i++) {
-                    TextBlock textBlock = textBlocks.get(textBlocks.keyAt(i));
-                    if (parsed){
-                        opts.add(textBlock.getValue());
-                    }
-                    else if (textBlock.getValue().length() > 15){
-                        question = textBlock.getValue();
-                        parsed = true;
-                    }
-                    imageText += textBlock.getValue();
-                }
-
-                RequestQueue queue = Volley.newRequestQueue(getBaseContext());
-                String url ="http://www.google.com/search?q=" + question;
-
-                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
-                        (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
-
-                            @Override
-                            public void onResponse(JSONObject response) {
-                                Log.e("r",response.toString());
-                            }
-                        }, new Response.ErrorListener() {
-
-                            @Override
-                            public void onErrorResponse(VolleyError error) {
-                                error.printStackTrace();
-
-                            }
-                        });
-                queue.add(jsonObjectRequest);
-
-                /*String google = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=";
-                String search = "stackoverflow";
-                String charset = "UTF-8";
-
-                URL url = new URL(google + URLEncoder.encode(search, charset));
-                Reader reader = new InputStreamReader(url.openStream(), charset);
-                GoogleResults results = new Gson().fromJson(reader, GoogleResults.class);*/
-
-
-                /*StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                        new Response.Listener<String>() {
-                            @Override
-                            public void onResponse(String response) {
-                                Log.e("r",response.toString());
-                                String string = response.toString().substring(15);
-                                JSONObject jsonObject = null;
-                                try {
-                                    jsonObject = new JSONObject(string);
-                                    JSONObject jsonObject_responseData = jsonObject.getJSONObject("responseData");
-                                    JSONArray jsonArray_results = jsonObject_responseData.getJSONArray("results");
-                                    for(int i = 0; i < jsonArray_results.length(); i++){
-
-                                        JSONObject jsonObject_i = jsonArray_results.getJSONObject(i);
-
-                                        String iTitle = jsonObject_i.getString("title");
-                                        String iContent = jsonObject_i.getString("content");
-                                        String iUrl = jsonObject_i.getString("url");
-
-                                        Log.e("url",iUrl);
-                                    }
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                }
-
-                                JSONParser jsonParser = new JSONParser();
-                                final JSONObject json = jsonParser.makeHttpRequest(url_kbj + "/" + idkbj + "/", "GET", params1);
-                                final JSONObject data = json.getJSONObject("data");
-
-                            }
-                        }, new Response.ErrorListener() {
+        RequestQueue queue = Volley.newRequestQueue(getBaseContext());
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+                new Response.Listener<String>() {
                     @Override
-                    public void onErrorResponse(VolleyError error) {
-                        error.printStackTrace();
+                    public void onResponse(String response) {
+                        Log.e("Response",response);
+                        Toast.makeText(getBaseContext(),response,Toast.LENGTH_LONG).show();
                     }
-                });
-                queue.add(stringRequest);
-                */
-
-
-
-
-                /*
-                Log.e("question",question);
-                for (String s : opts)
-                    Log.e("opt",s);
-                    */
-
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                error.printStackTrace();
             }
-        }).start();
+        });
+        stringRequest.setRetryPolicy(new DefaultRetryPolicy(
+                10000,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+
+        // Add the request to the RequestQueue.
+        queue.add(stringRequest);
     }
 }
