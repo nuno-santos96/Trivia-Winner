@@ -1,12 +1,9 @@
 package pt.ulisboa.tecnico.cmov.triviawinner;
 
 import android.app.Activity;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.hardware.display.DisplayManager;
@@ -16,30 +13,18 @@ import android.media.ImageReader;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Display;
-import android.widget.Toast;
 
-import com.android.volley.DefaultRetryPolicy;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.text.TextBlock;
 import com.google.android.gms.vision.text.TextRecognizer;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.text.MessageFormat;
 
 public class ScreenshotActivity extends Activity {
 
@@ -134,6 +119,8 @@ public class ScreenshotActivity extends Activity {
         }.start();
     }
 
+
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
@@ -214,7 +201,8 @@ public class ScreenshotActivity extends Activity {
         }
 
         opts = opts.replaceAll("\n",",");
-        opts = opts.substring(0, opts.length() - 1);
+        if (opts.length() > 0)
+            opts = opts.substring(0, opts.length() - 1);
         question = question.replaceAll("\n"," ");
 
         Intent intent = new Intent();

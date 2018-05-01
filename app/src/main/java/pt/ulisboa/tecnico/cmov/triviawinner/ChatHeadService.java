@@ -5,47 +5,45 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
+import android.os.Handler;
 import android.os.IBinder;
-import android.text.TextUtils;
-import android.util.Log;
-import android.util.SparseArray;
+import android.os.Looper;
+import android.os.Message;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.google.android.gms.vision.Frame;
-import com.google.android.gms.vision.text.TextBlock;
-import com.google.android.gms.vision.text.TextRecognizer;
 
-import org.json.JSONObject;
-
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.URL;
-import java.net.URLEncoder;
-import java.text.MessageFormat;
+import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
 
 public class ChatHeadService extends Service {
 
     private WindowManager mWindowManager;
     private View mChatHeadView;
     BroadcastReceiver myReceiver;
+    Toast resultToast;
 
     public ChatHeadService() {
     }
@@ -63,10 +61,20 @@ public class ChatHeadService extends Service {
 
         myReceiver = new BroadcastReceiver() {
             @Override
-            public void onReceive(Context context, Intent intent) {
-                String question = intent.getStringExtra("question");
-                String opts = intent.getStringExtra("opts");
-                sendServerRequest(question,opts);
+            public void onReceive(Context context, final Intent intent) {
+                Thread thread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try  {
+                            String question = intent.getStringExtra("question");
+                            String opts = intent.getStringExtra("opts");
+                            googleSearch(question,opts);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+                thread.start();
             }
         };
         IntentFilter intentFilter = new IntentFilter();
@@ -116,34 +124,117 @@ public class ChatHeadService extends Service {
         if (myReceiver != null) unregisterReceiver(myReceiver);
     }
 
-    public void sendServerRequest(String question, String opts){
-        Object[] params = new Object[] {getString(R.string.DEFAULT_PROTOCOL),
-                getString(R.string.DEFAULT_IP),
-                getString(R.string.DEFAULT_PORT),
-                question,
-                opts};
-        String url = MessageFormat.format("{0}://{1}:{2}/?q={3}&o={4}", params);
+    public void googleSearch(String question, String opts) {
+        final HashMap<String,Integer> answers = new HashMap<>();
+        for (String key : opts.split(","))
+            answers.put(key, 0);
+        String query = "https://www.google.com/search?q=" + question + "&num=10";
+        String page = getSearchContent(query);
+        String toToast = "";
+        for (String opt : answers.keySet()){
+            int count = StringUtils.countMatches(page, opt);
+            answers.put(opt,answers.get(opt) + count);
+            System.out.println(opt + " -> " + answers.get(opt));
+            toToast += opt + " -> " + answers.get(opt) + "\n";
+        }
+        Message toast = Message.obtain();
+        toast.obj = toToast;
+        toast.setTarget(toastHandler);
+        toast.sendToTarget();
 
-        RequestQueue queue = Volley.newRequestQueue(getBaseContext());
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.e("Response",response);
-                        Toast.makeText(getBaseContext(),response,Toast.LENGTH_LONG).show();
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                error.printStackTrace();
-            }
-        });
-        stringRequest.setRetryPolicy(new DefaultRetryPolicy(
-                10000,
-                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-
-        // Add the request to the RequestQueue.
-        queue.add(stringRequest);
+        List<String> links = parseLinks(page);
+        for (String link : links) {
+            RequestQueue queue = Volley.newRequestQueue(getBaseContext());
+            StringRequest stringRequest = new StringRequest(Request.Method.GET, link,
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            String toToast = "";
+                            for (String opt : answers.keySet()){
+                                int count = StringUtils.countMatches(response, opt);
+                                answers.put(opt,answers.get(opt) + count);
+                                System.out.println(opt + " -> " + answers.get(opt));
+                                toToast += opt + " -> " + answers.get(opt) + "\n";
+                            }
+                            Message toast = Message.obtain();
+                            toast.obj = toToast;
+                            toast.setTarget(toastHandler);
+                            toast.sendToTarget();
+                        }
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    //error.printStackTrace();
+                }
+            });
+            // Add the request to the RequestQueue.
+            queue.add(stringRequest);
+        }
     }
+
+    public static String getSearchContent(String path) {
+        final String agent = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
+        try {
+            URL url = new URL(path);
+            final URLConnection connection = url.openConnection();
+            connection.setRequestProperty("User-Agent", agent);
+            final InputStream stream = connection.getInputStream();
+            return getString(stream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "error";
+    }
+
+    public static List<String> parseLinks(final String html) {
+        List<String> result = new ArrayList<>();
+        String pattern1 = "<h3 class=\"r\"><a href=\"/url?q=";
+        String pattern2 = "\">";
+        Pattern p = Pattern.compile(Pattern.quote(pattern1) + "(.*?)" + Pattern.quote(pattern2));
+        Matcher m = p.matcher(html);
+
+        while (m.find()) {
+            String domainName = m.group(0).trim();
+
+            /* remove the unwanted text */
+            domainName = domainName.substring(domainName.indexOf("/url?q=") + 7);
+            domainName = domainName.substring(0, domainName.indexOf("&amp;"));
+
+            result.add(domainName);
+        }
+        return result;
+    }
+
+    public static String getString(InputStream is) {
+        StringBuilder sb = new StringBuilder();
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(is));
+        String line;
+        try {
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                br.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return sb.toString();
+    }
+
+    Handler toastHandler = new Handler(Looper.getMainLooper()) {
+        @Override
+        public void handleMessage(Message toastMessage) {
+            String toast = (String) toastMessage.obj;
+            if(resultToast == null)
+                resultToast = Toast.makeText(getBaseContext(), toast, Toast.LENGTH_LONG);
+            resultToast.setText(toast);
+            resultToast.setDuration(Toast.LENGTH_LONG);
+            resultToast.show();
+        }
+    };
 }
