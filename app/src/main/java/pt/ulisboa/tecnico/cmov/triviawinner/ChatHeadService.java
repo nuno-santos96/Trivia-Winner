@@ -1,17 +1,23 @@
 package pt.ulisboa.tecnico.cmov.triviawinner;
 
+import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.PixelFormat;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.support.v4.view.MotionEventCompat;
+import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -32,9 +38,12 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import android.widget.RelativeLayout.LayoutParams;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -42,6 +51,7 @@ public class ChatHeadService extends Service {
 
     private WindowManager mWindowManager;
     private View mChatHeadView;
+    private String game = "";
     BroadcastReceiver myReceiver;
     Toast resultToast;
 
@@ -54,8 +64,16 @@ public class ChatHeadService extends Service {
     }
 
     @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        game = intent.getStringExtra("game");
+        return START_STICKY;
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    @Override
     public void onCreate() {
         super.onCreate();
+
         //Inflate the chat head layout we created
         mChatHeadView = LayoutInflater.from(this).inflate(R.layout.layout_chat_head, null);
 
@@ -112,9 +130,62 @@ public class ChatHeadService extends Service {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getBaseContext(), ScreenshotActivity.class);
+                intent.putExtra("game",game);
                 startActivity(intent);
             }
         });
+
+
+        /*chatHeadImage.setOnTouchListener(new View.OnTouchListener() {
+            private int lastAction;
+            private int initialX;
+            private int initialY;
+            private float initialTouchX;
+            private float initialTouchY;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+
+                        //remember the initial position.
+                        initialX = params.x;
+                        initialY = params.y;
+
+                        //get the touch location
+                        initialTouchX = event.getRawX();
+                        initialTouchY = event.getRawY();
+
+                        lastAction = event.getAction();
+                        return true;
+                    case MotionEvent.ACTION_UP:
+                        //As we implemented on touch listener with ACTION_MOVE,
+                        //we have to check if the previous action was ACTION_DOWN
+                        //to identify if the user clicked the view or not.
+                        if (lastAction == MotionEvent.ACTION_DOWN) {
+                            //Open the chat conversation click.
+                            Intent intent = new Intent(getBaseContext(), ScreenshotActivity.class);
+                            intent.putExtra("game",game);
+                            startActivity(intent);
+
+                            //close the service and remove the chat heads
+                            //stopSelf();
+                        }
+                        lastAction = event.getAction();
+                        return true;
+                    case MotionEvent.ACTION_MOVE:
+                        //Calculate the X and Y coordinates of the view.
+                        params.x = initialX + (int) (event.getRawX() - initialTouchX);
+                        params.y = initialY + (int) (event.getRawY() - initialTouchY);
+
+                        //Update the layout with new X & Y coordinate
+                        mWindowManager.updateViewLayout(mChatHeadView, params);
+                        lastAction = event.getAction();
+                        return true;
+                }
+                return false;
+            }
+        });*/
     }
 
     @Override
@@ -125,16 +196,20 @@ public class ChatHeadService extends Service {
     }
 
     public void googleSearch(String question, String opts) {
-        final HashMap<String,Integer> answers = new HashMap<>();
-        for (String key : opts.split(","))
+        final LinkedHashMap<String,Integer> answers = new LinkedHashMap<>();
+        for (String key : opts.split(";"))
             answers.put(key, 0);
         String query = "https://www.google.com/search?q=" + question + "&num=10";
-        String page = getSearchContent(query);
+        String page = getSearchContent(query).toLowerCase();
         String toToast = "";
         for (String opt : answers.keySet()){
-            int count = StringUtils.countMatches(page, opt);
+            String patternString = "\\W" + opt + "\\W";
+            Pattern pattern = Pattern.compile(patternString);
+            Matcher matcher = pattern.matcher(page);
+            int count = 0;
+            while (matcher.find())
+                count++;
             answers.put(opt,answers.get(opt) + count);
-            System.out.println(opt + " -> " + answers.get(opt));
             toToast += opt + " -> " + answers.get(opt) + "\n";
         }
         Message toast = Message.obtain();
@@ -143,17 +218,22 @@ public class ChatHeadService extends Service {
         toast.sendToTarget();
 
         List<String> links = parseLinks(page);
+        RequestQueue queue = Volley.newRequestQueue(getBaseContext());
         for (String link : links) {
-            RequestQueue queue = Volley.newRequestQueue(getBaseContext());
             StringRequest stringRequest = new StringRequest(Request.Method.GET, link,
                     new Response.Listener<String>() {
                         @Override
                         public void onResponse(String response) {
+                            response = response.toLowerCase();
                             String toToast = "";
                             for (String opt : answers.keySet()){
-                                int count = StringUtils.countMatches(response, opt);
+                                String patternString = "\\W" + opt + "\\W";
+                                Pattern pattern = Pattern.compile(patternString);
+                                Matcher matcher = pattern.matcher(response);
+                                int count = 0;
+                                while (matcher.find())
+                                    count++;
                                 answers.put(opt,answers.get(opt) + count);
-                                System.out.println(opt + " -> " + answers.get(opt));
                                 toToast += opt + " -> " + answers.get(opt) + "\n";
                             }
                             Message toast = Message.obtain();

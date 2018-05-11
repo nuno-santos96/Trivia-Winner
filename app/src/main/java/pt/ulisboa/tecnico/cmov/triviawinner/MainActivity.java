@@ -6,6 +6,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.view.View;
+import android.widget.Button;
 
 public class MainActivity extends Activity {
     private static final int CODE_DRAW_OVER_OTHER_APP_PERMISSION = 2084;
@@ -25,19 +27,21 @@ public class MainActivity extends Activity {
             Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + getPackageName()));
             startActivityForResult(intent, CODE_DRAW_OVER_OTHER_APP_PERMISSION);
-        } else {
-            startService(new Intent(this, ChatHeadService.class));
-            finish();
         }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == CODE_DRAW_OVER_OTHER_APP_PERMISSION) {
-            startService(new Intent(this, ChatHeadService.class));
-            finish();
-        } else {
+        if (requestCode != CODE_DRAW_OVER_OTHER_APP_PERMISSION) {
             super.onActivityResult(requestCode, resultCode, data);
         }
+    }
+
+    public void onButtonClick(View v){
+        Button b = (Button) v;
+        Intent i = new Intent(this, ChatHeadService.class);
+        i.putExtra("game",b.getText().toString());
+        startService(i);
+        finish();
     }
 }
