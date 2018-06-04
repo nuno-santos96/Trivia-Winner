@@ -28,33 +28,13 @@ import com.google.android.gms.vision.text.TextRecognizer;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ScreenshotActivity extends Activity {
 
-    private static final String TAG = ScreenshotActivity.class.getName();
-    private static final int REQUEST_CODE = 100;
-    private static int IMAGES_PRODUCED;
-    private static final String SCREENCAP_NAME = "screencap";
-    private static final int VIRTUAL_DISPLAY_FLAGS = DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY | DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
-    private static MediaProjection sMediaProjection;
-    Bitmap bitmap = null;
-    final static String MY_ACTION = "MY_ACTION";
-
-    private static final Double[] GENERAL_GAME_QUESTION_SIZES = new Double[] {0.0,0.17,1.0,0.28};
-    private static final Double[] CS_GAME_QUESTION_SIZES = new Double[] {0.0,0.17,1.0,0.17};
-    private static final Double[] HANGTIME_GAME_QUESTION_SIZES = new Double[] {0.4,0.0,0.6,0.45};
-    private static final Double[] HYPSPORTS_GAME_QUESTION_SIZES = new Double[] {0.0,0.35,1.0,0.25};
-    private static final Double[] THEQ_GAME_QUESTION_SIZES = new Double[] {0.0,0.42,1.0,0.22};
-
-    private static final Double[] GENERAL_GAME_OPTS_SIZES = new Double[] {0.0,0.4,1.0,0.5};
-    private static final Double[] HANGTIME_GAME_OPTS_SIZES = new Double[] {0.4,0.45,0.6,0.55};
-    private static final Double[] HYPSPORTS_GAME_OPTS_SIZES = new Double[] {0.0,0.6,1.0,0.4};
-    private static final Double[] THEQ_GAME_OPTS_SIZES = new Double[] {0.0,0.65,1.0,0.35};
-    private static String game = "";
-    private static HashMap<String,Double[]> question_sizes = new HashMap<>();
-    private static HashMap<String,Double[]> opts_sizes = new HashMap<>();
-
+    private int REQUEST_CODE = 100;
+    private MediaProjection sMediaProjection;
     private MediaProjectionManager mProjectionManager;
     private ImageReader mImageReader;
     private Handler mHandler;
@@ -63,6 +43,23 @@ public class ScreenshotActivity extends Activity {
     private int mDensity;
     private int mWidth;
     private int mHeight;
+    private Bitmap bitmap = null;
+    public static String MY_ACTION = "MY_ACTION";
+
+    private Double[] GENERAL_QUESTION_SIZES = new Double[] {0.0,0.17,1.0,0.28};
+    private Double[] CS_QUESTION_SIZES = new Double[] {0.0,0.17,1.0,0.17};
+    private Double[] HANGTIME_QUESTION_SIZES = new Double[] {0.4,0.0,0.6,0.45};
+    private Double[] HYPSPORTS_QUESTION_SIZES = new Double[] {0.0,0.35,1.0,0.25};
+    private Double[] THEQ_QUESTION_SIZES = new Double[] {0.0,0.42,1.0,0.22};
+
+    private Double[] GENERAL_OPTS_SIZES = new Double[] {0.0,0.4,1.0,0.5};
+    private Double[] HANGTIME_OPTS_SIZES = new Double[] {0.4,0.45,0.6,0.55};
+    private Double[] HYPSPORTS_OPTS_SIZES = new Double[] {0.0,0.6,1.0,0.4};
+    private Double[] THEQ_OPTS_SIZES = new Double[] {0.0,0.65,1.0,0.35};
+
+    private String game = "";
+    private HashMap<String,Double[]> question_sizes = new HashMap<>();
+    private HashMap<String,Double[]> opts_sizes = new HashMap<>();
 
     private class ImageAvailableListener implements ImageReader.OnImageAvailableListener {
         @Override
@@ -82,7 +79,7 @@ public class ScreenshotActivity extends Activity {
                         bitmap = Bitmap.createBitmap(mWidth + rowPadding / pixelStride, mHeight, Bitmap.Config.ARGB_8888);
                         bitmap.copyPixelsFromBuffer(buffer);
 
-                        if (!game.equals("Other")) {
+                        if (!game.equals(Constants.DEFAULT_GAME)) {
                             int image_width = bitmap.getWidth();
                             int image_height = bitmap.getHeight();
                             Double[] q_sizes = question_sizes.get(game);
@@ -103,9 +100,6 @@ public class ScreenshotActivity extends Activity {
                         } else {
                             readImage(bitmap);
                         }
-
-                        IMAGES_PRODUCED++;
-                        Log.e(TAG, "captured image: " + IMAGES_PRODUCED);
 
                         stopProjection();
                     }
@@ -141,18 +135,18 @@ public class ScreenshotActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_screenshot);
 
-        game = getIntent().getStringExtra("game");
-        question_sizes.put("HQ",GENERAL_GAME_QUESTION_SIZES);
-        question_sizes.put("CS",CS_GAME_QUESTION_SIZES);
-        question_sizes.put("Hangtime",HANGTIME_GAME_QUESTION_SIZES);
-        question_sizes.put("Hypsports",HYPSPORTS_GAME_QUESTION_SIZES);
-        question_sizes.put("TheQ",THEQ_GAME_QUESTION_SIZES);
+        game = getIntent().getStringExtra(Constants.GAME_TITLE);
+        question_sizes.put(Constants.HQ, GENERAL_QUESTION_SIZES);
+        question_sizes.put(Constants.CASH_SHOW, CS_QUESTION_SIZES);
+        question_sizes.put(Constants.HANGTIME, HANGTIME_QUESTION_SIZES);
+        question_sizes.put(Constants.HYPSPORTS, HYPSPORTS_QUESTION_SIZES);
+        question_sizes.put(Constants.THEQ, THEQ_QUESTION_SIZES);
 
-        opts_sizes.put("HQ",GENERAL_GAME_OPTS_SIZES);
-        opts_sizes.put("CS",GENERAL_GAME_OPTS_SIZES);
-        opts_sizes.put("Hangtime",HANGTIME_GAME_OPTS_SIZES);
-        opts_sizes.put("Hypsports",HYPSPORTS_GAME_OPTS_SIZES);
-        opts_sizes.put("TheQ",THEQ_GAME_OPTS_SIZES);
+        opts_sizes.put(Constants.HQ, GENERAL_OPTS_SIZES);
+        opts_sizes.put(Constants.CASH_SHOW, GENERAL_OPTS_SIZES);
+        opts_sizes.put(Constants.HANGTIME, HANGTIME_OPTS_SIZES);
+        opts_sizes.put(Constants.HYPSPORTS, HYPSPORTS_OPTS_SIZES);
+        opts_sizes.put(Constants.THEQ, THEQ_OPTS_SIZES);
 
         // call for the projection manager
         mProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
@@ -212,6 +206,8 @@ public class ScreenshotActivity extends Activity {
 
     /****************************************** Factoring Virtual Display creation ****************/
     private void createVirtualDisplay() {
+        String screencap_name = "screencap";
+        int VIRTUAL_DISPLAY_FLAGS = DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY | DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
         // get width and height
         Point size = new Point();
         mDisplay.getSize(size);
@@ -220,7 +216,7 @@ public class ScreenshotActivity extends Activity {
 
         // start capture reader
         mImageReader = ImageReader.newInstance(mWidth, mHeight, PixelFormat.RGBA_8888, 1);
-        mVirtualDisplay = sMediaProjection.createVirtualDisplay(SCREENCAP_NAME, mWidth, mHeight, mDensity, VIRTUAL_DISPLAY_FLAGS, mImageReader.getSurface(), null, mHandler);
+        mVirtualDisplay = sMediaProjection.createVirtualDisplay(screencap_name, mWidth, mHeight, mDensity, VIRTUAL_DISPLAY_FLAGS, mImageReader.getSurface(), null, mHandler);
         mImageReader.setOnImageAvailableListener(new ImageAvailableListener(), mHandler);
     }
 
@@ -241,7 +237,7 @@ public class ScreenshotActivity extends Activity {
             String text = textBlocks.get(textBlocks.keyAt(i)).getValue();
             if (parsed){
                 if (n_of_opts < 3 && !text.contains("prize for") && !text.contains("$")) {
-                    opts += text.toLowerCase() + ";";
+                    opts += text.toLowerCase() + Constants.DELIMITER;
                     n_of_opts++;
                 }
             }
@@ -251,15 +247,15 @@ public class ScreenshotActivity extends Activity {
             }
         }
 
-        opts = opts.replaceAll("\n",";");
+        opts = opts.replaceAll("\n",Constants.DELIMITER);
         if (opts.length() > 0)
             opts = opts.substring(0, opts.length() - 1);
         question = question.replaceAll("\n"," ");
 
         Intent intent = new Intent();
         intent.setAction(MY_ACTION);
-        intent.putExtra("question", question);
-        intent.putExtra("opts", opts);
+        intent.putExtra(Constants.QUESTION, question);
+        intent.putExtra(Constants.OPTIONS, opts);
         sendBroadcast(intent);
     }
 
@@ -285,19 +281,19 @@ public class ScreenshotActivity extends Activity {
         }
         for (int i = 0; i < optsBlocks.size(); i++) {
             String text = optsBlocks.get(optsBlocks.keyAt(i)).getValue().toLowerCase();
-            opts += text + ";";
+            opts += text + Constants.DELIMITER;
         }
 
         if (opts.length() > 0)
             opts = opts.substring(0, opts.length() - 1);
         question = question.replaceAll("\n"," ");
-        opts = opts.replaceAll("\n",";");
+        opts = opts.replaceAll("\n",Constants.DELIMITER);
 
 
         Intent intent = new Intent();
         intent.setAction(MY_ACTION);
-        intent.putExtra("question", question);
-        intent.putExtra("opts", opts);
+        intent.putExtra(Constants.QUESTION, question);
+        intent.putExtra(Constants.OPTIONS, opts);
         sendBroadcast(intent);
     }
 

@@ -39,8 +39,8 @@ public class MainActivity extends Activity {
 
     public void onButtonClick(View v){
         Button b = (Button) v;
-        Intent i = new Intent(this, ChatHeadService.class);
-        i.putExtra("game",b.getText().toString());
+        Intent i = new Intent(this, ScannerService.class);
+        i.putExtra(Constants.GAME_TITLE,b.getText().toString());
         startService(i);
         finish();
     }

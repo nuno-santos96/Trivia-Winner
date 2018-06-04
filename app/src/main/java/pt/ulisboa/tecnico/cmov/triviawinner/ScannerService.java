@@ -7,17 +7,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.PixelFormat;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
-import android.support.v4.view.MotionEventCompat;
-import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -37,25 +32,20 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import android.widget.RelativeLayout.LayoutParams;
 
-import org.apache.commons.lang3.StringUtils;
-
-public class ChatHeadService extends Service {
+public class ScannerService extends Service {
 
     private WindowManager mWindowManager;
     private View mChatHeadView;
     private String game = "";
-    BroadcastReceiver myReceiver;
-    Toast resultToast;
+    private BroadcastReceiver myReceiver;
+    private Toast resultToast;
 
-    public ChatHeadService() {
+    public ScannerService() {
     }
 
     @Override
@@ -65,7 +55,7 @@ public class ChatHeadService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        game = intent.getStringExtra("game");
+        game = intent.getStringExtra(Constants.GAME_TITLE);
         return START_STICKY;
     }
 
@@ -75,7 +65,7 @@ public class ChatHeadService extends Service {
         super.onCreate();
 
         //Inflate the chat head layout we created
-        mChatHeadView = LayoutInflater.from(this).inflate(R.layout.layout_chat_head, null);
+        mChatHeadView = LayoutInflater.from(this).inflate(R.layout.layout_scanner, null);
 
         myReceiver = new BroadcastReceiver() {
             @Override
@@ -84,8 +74,8 @@ public class ChatHeadService extends Service {
                     @Override
                     public void run() {
                         try  {
-                            String question = intent.getStringExtra("question");
-                            String opts = intent.getStringExtra("opts");
+                            String question = intent.getStringExtra(Constants.QUESTION);
+                            String opts = intent.getStringExtra(Constants.OPTIONS);
                             googleSearch(question,opts);
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -130,7 +120,7 @@ public class ChatHeadService extends Service {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getBaseContext(), ScreenshotActivity.class);
-                intent.putExtra("game",game);
+                intent.putExtra(Constants.GAME_TITLE,game);
                 startActivity(intent);
             }
         });
@@ -197,7 +187,7 @@ public class ChatHeadService extends Service {
 
     public void googleSearch(String question, String opts) {
         final LinkedHashMap<String,Integer> answers = new LinkedHashMap<>();
-        for (String key : opts.split(";"))
+        for (String key : opts.split(Constants.DELIMITER))
             answers.put(key, 0);
         String query = "https://www.google.com/search?q=" + question + "&num=10";
         String page = getSearchContent(query).toLowerCase();
@@ -252,7 +242,7 @@ public class ChatHeadService extends Service {
         }
     }
 
-    public static String getSearchContent(String path) {
+    public String getSearchContent(String path) {
         final String agent = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
         try {
             URL url = new URL(path);
@@ -266,7 +256,7 @@ public class ChatHeadService extends Service {
         return "error";
     }
 
-    public static List<String> parseLinks(final String html) {
+    public List<String> parseLinks(final String html) {
         List<String> result = new ArrayList<>();
         String pattern1 = "<h3 class=\"r\"><a href=\"/url?q=";
         String pattern2 = "\">";
@@ -285,7 +275,7 @@ public class ChatHeadService extends Service {
         return result;
     }
 
-    public static String getString(InputStream is) {
+    public String getString(InputStream is) {
         StringBuilder sb = new StringBuilder();
 
         BufferedReader br = new BufferedReader(new InputStreamReader(is));

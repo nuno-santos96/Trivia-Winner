@@ -4,69 +4,65 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="pt.ulisboa.tecnico.cmov.triviawinner.MainActivity">
 
     <Button
         android:id="@+id/button"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_alignStart="@+id/button2"
-        android:layout_marginTop="43dp"
         android:onClick="onButtonClick"
         android:text="HQ" />
 
     <Button
         android:id="@+id/button2"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/button4"
         android:layout_below="@+id/button"
-        android:layout_centerHorizontal="true"
         android:layout_marginTop="23dp"
         android:onClick="onButtonClick"
-        android:text="CS" />
+        android:text="CashShow" />
 
     <Button
         android:id="@+id/button3"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignStart="@+id/button2"
-        android:layout_marginBottom="43dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/button6"
+        android:layout_marginTop="24dp"
         android:onClick="onButtonClick"
-        android:text="Other" />
+        android:text="Default" />
 
     <Button
         android:id="@+id/button4"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/button3"
+        android:layout_alignStart="@+id/button5"
         android:layout_below="@+id/button2"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="26dp"
         android:onClick="onButtonClick"
         android:text="Hangtime" />
 
     <Button
         android:id="@+id/button5"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignEnd="@+id/button4"
+        android:layout_alignStart="@+id/button6"
         android:layout_below="@+id/button4"
-        android:layout_marginTop="14dp"
+        android:layout_marginTop="24dp"
         android:onClick="onButtonClick"
         android:text="Hypsports" />
 
     <Button
         android:id="@+id/button6"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignEnd="@+id/button4"
-        android:layout_alignTop="@+id/button5"
-        android:layout_marginTop="60dp"
+        android:layout_alignStart="@+id/button3"
+        android:layout_below="@+id/button5"
+        android:layout_marginTop="22dp"
         android:onClick="onButtonClick"
         android:text="TheQ" />
 </RelativeLayout>
