@@ -48,12 +48,12 @@ public class ScreenshotActivity extends Activity {
 
     private Double[] GENERAL_QUESTION_SIZES = new Double[] {0.0,0.17,1.0,0.28};
     private Double[] CS_QUESTION_SIZES = new Double[] {0.0,0.17,1.0,0.17};
-    private Double[] HANGTIME_QUESTION_SIZES = new Double[] {0.4,0.0,0.6,0.45};
+    private Double[] HANGTIME_QUESTION_SIZES = new Double[] {0.0,0.3,0.45,0.7};
     private Double[] HYPSPORTS_QUESTION_SIZES = new Double[] {0.0,0.35,1.0,0.25};
     private Double[] THEQ_QUESTION_SIZES = new Double[] {0.0,0.42,1.0,0.22};
 
     private Double[] GENERAL_OPTS_SIZES = new Double[] {0.0,0.4,1.0,0.5};
-    private Double[] HANGTIME_OPTS_SIZES = new Double[] {0.4,0.45,0.6,0.55};
+    private Double[] HANGTIME_OPTS_SIZES = new Double[] {0.45,0.3,0.55,0.7};
     private Double[] HYPSPORTS_OPTS_SIZES = new Double[] {0.0,0.6,1.0,0.4};
     private Double[] THEQ_OPTS_SIZES = new Double[] {0.0,0.65,1.0,0.35};
 
@@ -94,8 +94,8 @@ public class ScreenshotActivity extends Activity {
                                                                             (int) (answers_sizes[2] * image_width),
                                                                             (int) (answers_sizes[3] * image_height));
 
-                            //saveBitmap(question_image,"Question" + IMAGES_PRODUCED +".jpg");
-                            //saveBitmap(opts_image,"Opts" + IMAGES_PRODUCED +".jpg");
+                            saveBitmap(question_image,"Question.jpg");
+                            saveBitmap(opts_image,"Opts.jpg");
                             readQuestionAndOptions(question_image,opts_image);
                         } else {
                             readImage(bitmap);
