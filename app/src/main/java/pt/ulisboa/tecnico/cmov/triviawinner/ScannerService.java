@@ -13,11 +13,13 @@ import android.os.Looper;
 import android.os.Message;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -59,7 +61,6 @@ public class ScannerService extends Service {
         return START_STICKY;
     }
 
-    @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onCreate() {
         super.onCreate();
@@ -98,7 +99,7 @@ public class ScannerService extends Service {
                 PixelFormat.TRANSLUCENT);
 
         //Specify the chat head position
-        params.gravity = Gravity.TOP | Gravity.END;
+        params.gravity = Gravity.TOP | Gravity.LEFT;
 
         //Add the view to the window
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
@@ -116,66 +117,55 @@ public class ScannerService extends Service {
 
         //Drag and move chat head using user's touch action.
         final ImageView chatHeadImage = mChatHeadView.findViewById(R.id.chat_head_profile_iv);
-        chatHeadImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getBaseContext(), ScreenshotActivity.class);
-                intent.putExtra(Constants.GAME_TITLE,game);
-                startActivity(intent);
-            }
-        });
 
 
-        /*chatHeadImage.setOnTouchListener(new View.OnTouchListener() {
+        chatHeadImage.setOnTouchListener(new View.OnTouchListener() {
             private int lastAction;
             private int initialX;
             private int initialY;
             private float initialTouchX;
             private float initialTouchY;
+            private int longClickDetect = 0;
+
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-
-                        //remember the initial position.
                         initialX = params.x;
                         initialY = params.y;
 
-                        //get the touch location
                         initialTouchX = event.getRawX();
                         initialTouchY = event.getRawY();
 
                         lastAction = event.getAction();
                         return true;
                     case MotionEvent.ACTION_UP:
-                        //As we implemented on touch listener with ACTION_MOVE,
-                        //we have to check if the previous action was ACTION_DOWN
-                        //to identify if the user clicked the view or not.
                         if (lastAction == MotionEvent.ACTION_DOWN) {
-                            //Open the chat conversation click.
                             Intent intent = new Intent(getBaseContext(), ScreenshotActivity.class);
-                            intent.putExtra("game",game);
+                            intent.putExtra(Constants.GAME_TITLE,game);
                             startActivity(intent);
-
-                            //close the service and remove the chat heads
-                            //stopSelf();
                         }
+                        longClickDetect = 0;
                         lastAction = event.getAction();
                         return true;
                     case MotionEvent.ACTION_MOVE:
-                        //Calculate the X and Y coordinates of the view.
                         params.x = initialX + (int) (event.getRawX() - initialTouchX);
                         params.y = initialY + (int) (event.getRawY() - initialTouchY);
 
-                        //Update the layout with new X & Y coordinate
                         mWindowManager.updateViewLayout(mChatHeadView, params);
-                        lastAction = event.getAction();
+
+                        longClickDetect++;
+                        if (longClickDetect == 10) {
+                            lastAction = event.getAction();
+                            longClickDetect = 0;
+                        }
+
                         return true;
                 }
                 return false;
             }
-        });*/
+        });
     }
 
     @Override
@@ -187,20 +177,18 @@ public class ScannerService extends Service {
 
     public void googleSearch(String question, String opts) {
         final LinkedHashMap<String,Integer> answers = new LinkedHashMap<>();
-        for (String key : opts.split(Constants.DELIMITER))
-            answers.put(key, 0);
         String query = "https://www.google.com/search?q=" + question + "&num=10";
         String page = getSearchContent(query).toLowerCase();
         String toToast = "";
-        for (String opt : answers.keySet()){
+        for (String opt : opts.split(Constants.DELIMITER)){
             String patternString = "\\W" + opt + "\\W";
             Pattern pattern = Pattern.compile(patternString);
             Matcher matcher = pattern.matcher(page);
             int count = 0;
             while (matcher.find())
                 count++;
-            answers.put(opt,answers.get(opt) + count);
-            toToast += opt + " -> " + answers.get(opt) + "\n";
+            answers.put(opt, count);
+            toToast += opt + " -> " + count + "\n";
         }
         Message toast = Message.obtain();
         toast.obj = toToast;
@@ -211,32 +199,36 @@ public class ScannerService extends Service {
         RequestQueue queue = Volley.newRequestQueue(getBaseContext());
         for (String link : links) {
             StringRequest stringRequest = new StringRequest(Request.Method.GET, link,
-                    new Response.Listener<String>() {
-                        @Override
-                        public void onResponse(String response) {
-                            response = response.toLowerCase();
-                            String toToast = "";
-                            for (String opt : answers.keySet()){
-                                String patternString = "\\W" + opt + "\\W";
-                                Pattern pattern = Pattern.compile(patternString);
-                                Matcher matcher = pattern.matcher(response);
-                                int count = 0;
-                                while (matcher.find())
-                                    count++;
-                                answers.put(opt,answers.get(opt) + count);
-                                toToast += opt + " -> " + answers.get(opt) + "\n";
-                            }
-                            Message toast = Message.obtain();
-                            toast.obj = toToast;
-                            toast.setTarget(toastHandler);
-                            toast.sendToTarget();
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        response = response.toLowerCase();
+                        String toToast = "";
+                        for (String opt : answers.keySet()){
+                            String patternString = "\\W" + opt + "\\W";
+                            Pattern pattern = Pattern.compile(patternString);
+                            Matcher matcher = pattern.matcher(response);
+                            int count = 0;
+                            while (matcher.find())
+                                count++;
+                            answers.put(opt,answers.get(opt) + count);
+                            toToast += opt + " -> " + answers.get(opt) + "\n";
                         }
-                    }, new Response.ErrorListener() {
+                        Message toast = Message.obtain();
+                        toast.obj = toToast;
+                        toast.setTarget(toastHandler);
+                        toast.sendToTarget();
+                    }
+                }, new Response.ErrorListener() {
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     //error.printStackTrace();
                 }
             });
+            stringRequest.setRetryPolicy(new DefaultRetryPolicy(
+                    5000,
+                    DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                    DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
             // Add the request to the RequestQueue.
             queue.add(stringRequest);
         }

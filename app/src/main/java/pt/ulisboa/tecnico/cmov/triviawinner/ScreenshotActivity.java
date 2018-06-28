@@ -94,8 +94,8 @@ public class ScreenshotActivity extends Activity {
                                                                             (int) (answers_sizes[2] * image_width),
                                                                             (int) (answers_sizes[3] * image_height));
 
-                            saveBitmap(question_image,"Question.jpg");
-                            saveBitmap(opts_image,"Opts.jpg");
+                            //saveBitmap(question_image,"Question.jpg");
+                            //saveBitmap(opts_image,"Opts.jpg");
                             readQuestionAndOptions(question_image,opts_image);
                         } else {
                             readImage(bitmap);
@@ -279,6 +279,7 @@ public class ScreenshotActivity extends Activity {
             String text = questionBlocks.get(questionBlocks.keyAt(i)).getValue();
             question += text;
         }
+
         for (int i = 0; i < optsBlocks.size(); i++) {
             String text = optsBlocks.get(optsBlocks.keyAt(i)).getValue().toLowerCase();
             opts += text + Constants.DELIMITER;
