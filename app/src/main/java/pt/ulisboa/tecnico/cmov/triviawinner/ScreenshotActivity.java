@@ -46,13 +46,14 @@ public class ScreenshotActivity extends Activity {
     private Bitmap bitmap = null;
     public static String MY_ACTION = "MY_ACTION";
 
-    private Double[] GENERAL_QUESTION_SIZES = new Double[] {0.0,0.17,1.0,0.28};
+    private Double[] HQ_QUESTION_SIZES = new Double[] {0.0,0.17,1.0,0.25};
     private Double[] CS_QUESTION_SIZES = new Double[] {0.0,0.17,1.0,0.17};
     private Double[] HANGTIME_QUESTION_SIZES = new Double[] {0.0,0.3,0.45,0.7};
     private Double[] HYPSPORTS_QUESTION_SIZES = new Double[] {0.0,0.35,1.0,0.25};
     private Double[] THEQ_QUESTION_SIZES = new Double[] {0.0,0.42,1.0,0.22};
 
-    private Double[] GENERAL_OPTS_SIZES = new Double[] {0.0,0.4,1.0,0.5};
+    private Double[] HQ_OPTS_SIZES = new Double[] {0.0,0.42,1.0,0.35};
+    private Double[] CS_OPTS_SIZES = new Double[] {0.0,0.39,1.0,0.35};
     private Double[] HANGTIME_OPTS_SIZES = new Double[] {0.45,0.3,0.55,0.7};
     private Double[] HYPSPORTS_OPTS_SIZES = new Double[] {0.0,0.6,1.0,0.4};
     private Double[] THEQ_OPTS_SIZES = new Double[] {0.0,0.65,1.0,0.35};
@@ -94,8 +95,8 @@ public class ScreenshotActivity extends Activity {
                                                                             (int) (answers_sizes[2] * image_width),
                                                                             (int) (answers_sizes[3] * image_height));
 
-                            //saveBitmap(question_image,"Question.jpg");
-                            //saveBitmap(opts_image,"Opts.jpg");
+                            saveBitmap(question_image,"Question.jpg");
+                            saveBitmap(opts_image,"Opts.jpg");
                             readQuestionAndOptions(question_image,opts_image);
                         } else {
                             readImage(bitmap);
@@ -136,14 +137,14 @@ public class ScreenshotActivity extends Activity {
         setContentView(R.layout.activity_screenshot);
 
         game = getIntent().getStringExtra(Constants.GAME_TITLE);
-        question_sizes.put(Constants.HQ, GENERAL_QUESTION_SIZES);
+        question_sizes.put(Constants.HQ, HQ_QUESTION_SIZES);
         question_sizes.put(Constants.CASH_SHOW, CS_QUESTION_SIZES);
         question_sizes.put(Constants.HANGTIME, HANGTIME_QUESTION_SIZES);
         question_sizes.put(Constants.HYPSPORTS, HYPSPORTS_QUESTION_SIZES);
         question_sizes.put(Constants.THEQ, THEQ_QUESTION_SIZES);
 
-        opts_sizes.put(Constants.HQ, GENERAL_OPTS_SIZES);
-        opts_sizes.put(Constants.CASH_SHOW, GENERAL_OPTS_SIZES);
+        opts_sizes.put(Constants.HQ, HQ_OPTS_SIZES);
+        opts_sizes.put(Constants.CASH_SHOW, CS_OPTS_SIZES);
         opts_sizes.put(Constants.HANGTIME, HANGTIME_OPTS_SIZES);
         opts_sizes.put(Constants.HYPSPORTS, HYPSPORTS_OPTS_SIZES);
         opts_sizes.put(Constants.THEQ, THEQ_OPTS_SIZES);

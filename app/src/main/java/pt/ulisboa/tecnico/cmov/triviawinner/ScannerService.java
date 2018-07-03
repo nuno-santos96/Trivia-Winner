@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.PixelFormat;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -144,6 +145,7 @@ public class ScannerService extends Service {
                         if (lastAction == MotionEvent.ACTION_DOWN) {
                             Intent intent = new Intent(getBaseContext(), ScreenshotActivity.class);
                             intent.putExtra(Constants.GAME_TITLE,game);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             startActivity(intent);
                         }
                         longClickDetect = 0;
@@ -177,8 +179,7 @@ public class ScannerService extends Service {
 
     public void googleSearch(String question, String opts) {
         final LinkedHashMap<String,Integer> answers = new LinkedHashMap<>();
-        String query = "https://www.google.com/search?q=" + question + "&num=10";
-        String page = getSearchContent(query).toLowerCase();
+        String page = getSearchContent(question).toLowerCase();
         String toToast = "";
         for (String opt : opts.split(Constants.DELIMITER)){
             String patternString = "\\W" + opt + "\\W";
@@ -234,10 +235,17 @@ public class ScannerService extends Service {
         }
     }
 
-    public String getSearchContent(String path) {
+    public String getSearchContent(String query) {
         final String agent = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
         try {
-            URL url = new URL(path);
+            Uri.Builder builder = new Uri.Builder();
+            builder.scheme("https")
+                    .authority("www.google.com")
+                    .appendPath("search")
+                    .appendQueryParameter("q", query)
+                    .appendQueryParameter("num", "10");
+            String uri = builder.build().toString();
+            URL url = new URL(uri);
             final URLConnection connection = url.openConnection();
             connection.setRequestProperty("User-Agent", agent);
             final InputStream stream = connection.getInputStream();
