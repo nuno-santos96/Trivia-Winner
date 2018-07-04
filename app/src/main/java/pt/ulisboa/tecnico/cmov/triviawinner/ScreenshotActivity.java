@@ -95,8 +95,8 @@ public class ScreenshotActivity extends Activity {
                                                                             (int) (answers_sizes[2] * image_width),
                                                                             (int) (answers_sizes[3] * image_height));
 
-                            saveBitmap(question_image,"Question.jpg");
-                            saveBitmap(opts_image,"Opts.jpg");
+                            //saveBitmap(question_image,"Question.jpg");
+                            //saveBitmap(opts_image,"Opts.jpg");
                             readQuestionAndOptions(question_image,opts_image);
                         } else {
                             readImage(bitmap);

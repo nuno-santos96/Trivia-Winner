@@ -59,7 +59,7 @@ public class ScannerService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         game = intent.getStringExtra(Constants.GAME_TITLE);
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
     @Override
