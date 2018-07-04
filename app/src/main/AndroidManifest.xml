@@ -21,14 +21,16 @@
 
         <meta-data
             android:name="io.fabric.ApiKey"
-            android:value="30e1352ca1261f913146a19c9aecf34600192f3c"
-            />
+            android:value="30e1352ca1261f913146a19c9aecf34600192f3c" />
 
         <service
             android:name=".ScannerService"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false"
+            android:process=":remote" />
 
-        <activity android:name=".ScreenshotActivity" android:theme="@style/Theme.Transparent"></activity>
+        <activity
+            android:name=".ScreenshotActivity"
+            android:theme="@style/Theme.Transparent" />
     </application>
 </manifest>

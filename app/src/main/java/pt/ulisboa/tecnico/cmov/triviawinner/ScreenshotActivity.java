@@ -21,6 +21,7 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.view.Display;
 
+import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.text.TextBlock;
 import com.google.android.gms.vision.text.TextRecognizer;
@@ -28,8 +29,9 @@ import com.google.android.gms.vision.text.TextRecognizer;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.HashMap;
+
+import io.fabric.sdk.android.Fabric;
 
 public class ScreenshotActivity extends Activity {
 
@@ -134,6 +136,7 @@ public class ScreenshotActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Fabric.with(this, new Crashlytics());
         setContentView(R.layout.activity_screenshot);
 
         game = getIntent().getStringExtra(Constants.GAME_TITLE);
