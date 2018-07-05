@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.hardware.display.DisplayManager;
@@ -64,6 +65,23 @@ public class ScreenshotActivity extends Activity {
     private HashMap<String,Double[]> question_sizes = new HashMap<>();
     private HashMap<String,Double[]> opts_sizes = new HashMap<>();
 
+    public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+        float scaleWidth = ((float) newWidth) / width;
+        float scaleHeight = ((float) newHeight) / height;
+        // CREATE A MATRIX FOR THE MANIPULATION
+        Matrix matrix = new Matrix();
+        // RESIZE THE BIT MAP
+        matrix.postScale(scaleWidth, scaleHeight);
+
+        // "RECREATE" THE NEW BITMAP
+        Bitmap resizedBitmap = Bitmap.createBitmap(
+                bm, 0, 0, width, height, matrix, false);
+        bm.recycle();
+        return resizedBitmap;
+    }
+
     private class ImageAvailableListener implements ImageReader.OnImageAvailableListener {
         @Override
         public void onImageAvailable(ImageReader reader) {
@@ -82,6 +100,8 @@ public class ScreenshotActivity extends Activity {
                         bitmap = Bitmap.createBitmap(mWidth + rowPadding / pixelStride, mHeight, Bitmap.Config.ARGB_8888);
                         bitmap.copyPixelsFromBuffer(buffer);
 
+                        //Bitmap resizedBitmap = getResizedBitmap(bitmap, 720, 1280);
+
                         if (!game.equals(Constants.DEFAULT_GAME)) {
                             int image_width = bitmap.getWidth();
                             int image_height = bitmap.getHeight();
@@ -99,6 +119,8 @@ public class ScreenshotActivity extends Activity {
 
                             //saveBitmap(question_image,"Question.jpg");
                             //saveBitmap(opts_image,"Opts.jpg");
+                            //saveBitmap(resizedBitmap,"Resized.jpg");
+
                             readQuestionAndOptions(question_image,opts_image);
                         } else {
                             readImage(bitmap);
@@ -286,7 +308,9 @@ public class ScreenshotActivity extends Activity {
 
         for (int i = 0; i < optsBlocks.size(); i++) {
             String text = optsBlocks.get(optsBlocks.keyAt(i)).getValue().toLowerCase();
-            opts += text + Constants.DELIMITER;
+            for (String s : text.split("/")){
+                opts += s.trim() + Constants.DELIMITER;
+            }
         }
 
         if (opts.length() > 0)
@@ -294,6 +318,8 @@ public class ScreenshotActivity extends Activity {
         question = question.replaceAll("\n"," ");
         opts = opts.replaceAll("\n",Constants.DELIMITER);
 
+        if (question.startsWith("Which of these"))
+            question = question.substring(15);
 
         Intent intent = new Intent();
         intent.setAction(MY_ACTION);

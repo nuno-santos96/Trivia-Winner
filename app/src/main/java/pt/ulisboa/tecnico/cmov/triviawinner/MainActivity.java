@@ -45,7 +45,7 @@ public class MainActivity extends Activity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
                 Toast.makeText(this,
                         "Draw over other app permission not available. Closing the application",
-                        Toast.LENGTH_SHORT).show();
+                        Toast.LENGTH_LONG).show();
 
                 finish();
             }

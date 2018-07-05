@@ -122,7 +122,6 @@ public class ScannerService extends Service {
         //Drag and move chat head using user's touch action.
         final ImageView chatHeadImage = mChatHeadView.findViewById(R.id.chat_head_profile_iv);
 
-
         chatHeadImage.setOnTouchListener(new View.OnTouchListener() {
             private int lastAction;
             private int initialX;
@@ -130,7 +129,6 @@ public class ScannerService extends Service {
             private float initialTouchX;
             private float initialTouchY;
             private int longClickDetect = 0;
-
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -185,7 +183,7 @@ public class ScannerService extends Service {
         String page = getSearchContent(question).toLowerCase();
         String toToast = "";
         for (String opt : opts.split(Constants.DELIMITER)){
-            String patternString = "\\W" + opt + "\\W";
+            String patternString = "\\b" + opt + "\\b";
             Pattern pattern = Pattern.compile(patternString);
             Matcher matcher = pattern.matcher(page);
             int count = 0;
@@ -209,7 +207,7 @@ public class ScannerService extends Service {
                         response = response.toLowerCase();
                         String toToast = "";
                         for (String opt : answers.keySet()){
-                            String patternString = "\\W" + opt + "\\W";
+                            String patternString = "\\b" + opt + "\\b";
                             Pattern pattern = Pattern.compile(patternString);
                             Matcher matcher = pattern.matcher(response);
                             int count = 0;
