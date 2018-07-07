@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Matrix;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.hardware.display.DisplayManager;
@@ -26,6 +25,7 @@ import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.text.TextBlock;
 import com.google.android.gms.vision.text.TextRecognizer;
+import com.googlecode.tesseract.android.TessBaseAPI;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -65,23 +65,6 @@ public class ScreenshotActivity extends Activity {
     private HashMap<String,Double[]> question_sizes = new HashMap<>();
     private HashMap<String,Double[]> opts_sizes = new HashMap<>();
 
-    public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
-        int width = bm.getWidth();
-        int height = bm.getHeight();
-        float scaleWidth = ((float) newWidth) / width;
-        float scaleHeight = ((float) newHeight) / height;
-        // CREATE A MATRIX FOR THE MANIPULATION
-        Matrix matrix = new Matrix();
-        // RESIZE THE BIT MAP
-        matrix.postScale(scaleWidth, scaleHeight);
-
-        // "RECREATE" THE NEW BITMAP
-        Bitmap resizedBitmap = Bitmap.createBitmap(
-                bm, 0, 0, width, height, matrix, false);
-        bm.recycle();
-        return resizedBitmap;
-    }
-
     private class ImageAvailableListener implements ImageReader.OnImageAvailableListener {
         @Override
         public void onImageAvailable(ImageReader reader) {
@@ -100,8 +83,6 @@ public class ScreenshotActivity extends Activity {
                         bitmap = Bitmap.createBitmap(mWidth + rowPadding / pixelStride, mHeight, Bitmap.Config.ARGB_8888);
                         bitmap.copyPixelsFromBuffer(buffer);
 
-                        //Bitmap resizedBitmap = getResizedBitmap(bitmap, 720, 1280);
-
                         if (!game.equals(Constants.DEFAULT_GAME)) {
                             int image_width = bitmap.getWidth();
                             int image_height = bitmap.getHeight();
@@ -117,13 +98,14 @@ public class ScreenshotActivity extends Activity {
                                                                             (int) (answers_sizes[2] * image_width),
                                                                             (int) (answers_sizes[3] * image_height));
 
+
                             //saveBitmap(question_image,"Question.jpg");
                             //saveBitmap(opts_image,"Opts.jpg");
-                            //saveBitmap(resizedBitmap,"Resized.jpg");
 
-                            readQuestionAndOptions(question_image,opts_image);
+                            //googleVisionOCR(question_image,opts_image);
+                            tesseractOCR(question_image,opts_image);
                         } else {
-                            readImage(bitmap);
+                            fullscreenOCR(bitmap);
                         }
 
                         stopProjection();
@@ -162,6 +144,7 @@ public class ScreenshotActivity extends Activity {
         setContentView(R.layout.activity_screenshot);
 
         game = getIntent().getStringExtra(Constants.GAME_TITLE);
+
         question_sizes.put(Constants.HQ, HQ_QUESTION_SIZES);
         question_sizes.put(Constants.CASH_SHOW, CS_QUESTION_SIZES);
         question_sizes.put(Constants.HANGTIME, HANGTIME_QUESTION_SIZES);
@@ -246,7 +229,37 @@ public class ScreenshotActivity extends Activity {
         mImageReader.setOnImageAvailableListener(new ImageAvailableListener(), mHandler);
     }
 
-    public void readImage(Bitmap bitmap){
+    public void tesseractOCR(Bitmap questionBitmap, Bitmap optsBitmap){
+        TessBaseAPI tessTwo = new TessBaseAPI();
+        tessTwo.init(Environment.getExternalStorageDirectory().toString(), "eng");
+        tessTwo.setPageSegMode(TessBaseAPI.PageSegMode.PSM_SINGLE_BLOCK);
+
+        tessTwo.setImage(questionBitmap);
+        String question = tessTwo.getUTF8Text();
+
+        tessTwo.setImage(optsBitmap);
+        String opts = tessTwo.getUTF8Text();
+
+        question = question.replaceAll("\n"," ");
+        opts = opts.replaceAll("\n",Constants.DELIMITER);
+        opts = opts.replaceAll("/",Constants.DELIMITER);
+        opts = opts.toLowerCase();
+        if (question.startsWith("Which of these"))
+            question = question.substring(15);
+
+        System.out.println(question);
+        System.out.println(opts);
+
+        tessTwo.end();
+
+        Intent intent = new Intent();
+        intent.setAction(MY_ACTION);
+        intent.putExtra(Constants.QUESTION, question);
+        intent.putExtra(Constants.OPTIONS, opts);
+        sendBroadcast(intent);
+    }
+
+    public void fullscreenOCR(Bitmap bitmap){
         TextRecognizer textRecognizer = new TextRecognizer.Builder(getApplicationContext()).build();
         Frame imageFrame = new Frame.Builder()
                 .setBitmap(bitmap)
@@ -285,7 +298,7 @@ public class ScreenshotActivity extends Activity {
         sendBroadcast(intent);
     }
 
-    public void readQuestionAndOptions(Bitmap questionBitmap, Bitmap optsBitmap){
+    public void googleVisionOCR(Bitmap questionBitmap, Bitmap optsBitmap){
         TextRecognizer textRecognizer = new TextRecognizer.Builder(getApplicationContext()).build();
         Frame questionFrame = new Frame.Builder()
                 .setBitmap(questionBitmap)
