@@ -6,19 +6,10 @@
     android:layout_height="match_parent"
     tools:context="pt.ulisboa.tecnico.cmov.triviawinner.MainActivity">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-    </LinearLayout>
-
     <Button
         android:id="@+id/button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
         android:contentDescription="HQ/eng"
         android:onClick="onButtonClick"
         android:text="HQ" />
@@ -27,7 +18,6 @@
         android:id="@+id/button2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/button3"
         android:layout_below="@+id/button"
         android:contentDescription="CashShow/eng"
         android:onClick="onButtonClick"
@@ -37,7 +27,6 @@
         android:id="@+id/button3"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/button4"
         android:layout_below="@+id/button2"
         android:contentDescription="CashShow/fra"
         android:onClick="onButtonClick"
@@ -47,7 +36,6 @@
         android:id="@+id/button4"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/button6"
         android:layout_below="@+id/button3"
         android:contentDescription="CashShow/deu"
         android:onClick="onButtonClick"
@@ -66,7 +54,6 @@
         android:id="@+id/button6"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/button7"
         android:layout_below="@+id/button5"
         android:contentDescription="Hangtime/eng"
         android:onClick="onButtonClick"
@@ -76,27 +63,34 @@
         android:id="@+id/button7"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentStart="true"
         android:layout_below="@+id/button6"
-        android:contentDescription="Hypsports/eng"
+        android:contentDescription="Q12/spa"
         android:onClick="onButtonClick"
-        android:text="Hypsports" />
+        android:text="Q12" />
 
     <Button
         android:id="@+id/button8"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/button7"
-        android:contentDescription="TheQ/eng"
+        android:contentDescription="Hypsports/eng"
         android:onClick="onButtonClick"
-        android:text="TheQ" />
+        android:text="Hypsports" />
 
     <Button
         android:id="@+id/button9"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/button8"
+        android:contentDescription="TheQ/eng"
+        android:onClick="onButtonClick"
+        android:text="TheQ" />
+
+    <Button
+        android:id="@+id/button10"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/button9"
         android:contentDescription="Others/eng"
         android:onClick="onButtonClick"
         android:text="Others" />

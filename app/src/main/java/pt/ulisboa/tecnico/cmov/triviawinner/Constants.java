@@ -16,5 +16,6 @@ public class Constants {
     public static String HANGTIME = "Hangtime";
     public static String HYPSPORTS = "Hypsports";
     public static String THEQ = "TheQ";
+    public static String QTWELVE = "Q12";
     public static String DELIMITER = ";";
 }

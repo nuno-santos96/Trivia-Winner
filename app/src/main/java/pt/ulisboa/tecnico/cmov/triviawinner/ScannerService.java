@@ -73,8 +73,8 @@ public class ScannerService extends Service {
         game = intent.getStringExtra(Constants.GAME_TITLE);
         String lang = intent.getStringExtra(Constants.GAME_LANG);
         tessTwo = new TessBaseAPI();
-        tessTwo.init(Environment.getExternalStorageDirectory().toString(), lang);
-        tessTwo.setPageSegMode(2);
+        //tessTwo.init(Environment.getExternalStorageDirectory().toString(), lang);
+        //tessTwo.setPageSegMode(2);
         return START_NOT_STICKY;
     }
 
@@ -98,8 +98,8 @@ public class ScannerService extends Service {
                                 Bitmap question = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
                                 byte[] byteArray2 = intent.getByteArrayExtra(Constants.OPTIONS);
                                 Bitmap opts = BitmapFactory.decodeByteArray(byteArray2, 0, byteArray2.length);
-                                tesseractOCR(question,opts);
-                                //googleVisionOCR(question,opts);
+                                //tesseractOCR(question,opts);
+                                googleVisionOCR(question,opts);
                             } else {
                                 byte[] byteArray = intent.getByteArrayExtra(Constants.FULLSCREEN);
                                 Bitmap screenshot = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
