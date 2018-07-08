@@ -6,8 +6,10 @@ package pt.ulisboa.tecnico.cmov.triviawinner;
 
 public class Constants {
     public static String GAME_TITLE = "game";
+    public static String GAME_LANG = "lang";
     public static String QUESTION = "question";
     public static String OPTIONS = "options";
+    public static String FULLSCREEN = "fullscreen";
     public static String DEFAULT_GAME = "Others";
     public static String HQ = "HQ";
     public static String CASH_SHOW = "CashShow";

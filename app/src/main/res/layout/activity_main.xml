@@ -6,13 +6,20 @@
     android:layout_height="match_parent"
     tools:context="pt.ulisboa.tecnico.cmov.triviawinner.MainActivity">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+    </LinearLayout>
+
     <Button
         android:id="@+id/button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_marginTop="153dp"
+        android:contentDescription="HQ/eng"
         android:onClick="onButtonClick"
         android:text="HQ" />
 
@@ -20,61 +27,78 @@
         android:id="@+id/button2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/button4"
+        android:layout_alignStart="@+id/button3"
         android:layout_below="@+id/button"
+        android:contentDescription="CashShow/eng"
         android:onClick="onButtonClick"
-        android:text="CashShow" />
+        android:text="CashShow US/UK/AUS" />
 
     <Button
         android:id="@+id/button3"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/button6"
+        android:layout_alignStart="@+id/button4"
+        android:layout_below="@+id/button2"
+        android:contentDescription="CashShow/fra"
         android:onClick="onButtonClick"
-        android:text="Others" />
+        android:text="CashShow France" />
 
     <Button
         android:id="@+id/button4"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/button5"
-        android:layout_below="@+id/button2"
+        android:layout_alignStart="@+id/button6"
+        android:layout_below="@+id/button3"
+        android:contentDescription="CashShow/deu"
         android:onClick="onButtonClick"
-        android:text="Hangtime" />
+        android:text="CashShow Germany" />
 
     <Button
         android:id="@+id/button5"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/button6"
         android:layout_below="@+id/button4"
+        android:contentDescription="CashShow/jpn"
         android:onClick="onButtonClick"
-        android:text="Hypsports" />
+        android:text="CashShow Japan" />
 
     <Button
         android:id="@+id/button6"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/button3"
+        android:layout_alignStart="@+id/button7"
         android:layout_below="@+id/button5"
+        android:contentDescription="Hangtime/eng"
+        android:onClick="onButtonClick"
+        android:text="Hangtime" />
+
+    <Button
+        android:id="@+id/button7"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/button6"
+        android:contentDescription="Hypsports/eng"
+        android:onClick="onButtonClick"
+        android:text="Hypsports" />
+
+    <Button
+        android:id="@+id/button8"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/button7"
+        android:contentDescription="TheQ/eng"
         android:onClick="onButtonClick"
         android:text="TheQ" />
 
-    <LinearLayout
+    <Button
+        android:id="@+id/button9"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <ImageView
-            android:id="@+id/imageView"
-            android:layout_width="match_parent"
-            android:layout_height="169dp"
-            android:layout_above="@+id/button2"
-            android:layout_alignParentStart="true"
-            android:layout_marginBottom="24dp"
-            android:src="@drawable/trivia_winner_logo" />
-    </LinearLayout>
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/button8"
+        android:contentDescription="Others/eng"
+        android:onClick="onButtonClick"
+        android:text="Others" />
 
 </RelativeLayout>

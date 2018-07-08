@@ -27,6 +27,7 @@ import com.google.android.gms.vision.text.TextBlock;
 import com.google.android.gms.vision.text.TextRecognizer;
 import com.googlecode.tesseract.android.TessBaseAPI;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
@@ -102,10 +103,28 @@ public class ScreenshotActivity extends Activity {
                             //saveBitmap(question_image,"Question.jpg");
                             //saveBitmap(opts_image,"Opts.jpg");
 
-                            //googleVisionOCR(question_image,opts_image);
-                            tesseractOCR(question_image,opts_image);
+                            //Compress bitmaps to pass them to the service
+                            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                            ByteArrayOutputStream stream2 = new ByteArrayOutputStream();
+                            question_image.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                            opts_image.compress(Bitmap.CompressFormat.PNG, 100, stream2);
+                            byte[] question = stream.toByteArray();
+                            byte[] opts = stream2.toByteArray();
+
+                            Intent intent = new Intent();
+                            intent.setAction(MY_ACTION);
+                            intent.putExtra(Constants.QUESTION,question);
+                            intent.putExtra(Constants.OPTIONS,opts);
+                            sendBroadcast(intent);
                         } else {
-                            fullscreenOCR(bitmap);
+                            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                            byte[] screenshot = stream.toByteArray();
+
+                            Intent intent = new Intent();
+                            intent.setAction(MY_ACTION);
+                            intent.putExtra(Constants.FULLSCREEN,screenshot);
+                            sendBroadcast(intent);
                         }
 
                         stopProjection();
@@ -227,118 +246,6 @@ public class ScreenshotActivity extends Activity {
         mImageReader = ImageReader.newInstance(mWidth, mHeight, PixelFormat.RGBA_8888, 1);
         mVirtualDisplay = sMediaProjection.createVirtualDisplay(screencap_name, mWidth, mHeight, mDensity, VIRTUAL_DISPLAY_FLAGS, mImageReader.getSurface(), null, mHandler);
         mImageReader.setOnImageAvailableListener(new ImageAvailableListener(), mHandler);
-    }
-
-    public void tesseractOCR(Bitmap questionBitmap, Bitmap optsBitmap){
-        TessBaseAPI tessTwo = new TessBaseAPI();
-        tessTwo.init(Environment.getExternalStorageDirectory().toString(), "eng");
-        tessTwo.setPageSegMode(TessBaseAPI.PageSegMode.PSM_SINGLE_BLOCK);
-
-        tessTwo.setImage(questionBitmap);
-        String question = tessTwo.getUTF8Text();
-
-        tessTwo.setImage(optsBitmap);
-        String opts = tessTwo.getUTF8Text();
-
-        question = question.replaceAll("\n"," ");
-        opts = opts.replaceAll("\n",Constants.DELIMITER);
-        opts = opts.replaceAll("/",Constants.DELIMITER);
-        opts = opts.toLowerCase();
-        if (question.startsWith("Which of these"))
-            question = question.substring(15);
-
-        System.out.println(question);
-        System.out.println(opts);
-
-        tessTwo.end();
-
-        Intent intent = new Intent();
-        intent.setAction(MY_ACTION);
-        intent.putExtra(Constants.QUESTION, question);
-        intent.putExtra(Constants.OPTIONS, opts);
-        sendBroadcast(intent);
-    }
-
-    public void fullscreenOCR(Bitmap bitmap){
-        TextRecognizer textRecognizer = new TextRecognizer.Builder(getApplicationContext()).build();
-        Frame imageFrame = new Frame.Builder()
-                .setBitmap(bitmap)
-                .build();
-
-        String question = "";
-        String opts = "";
-        boolean parsed = false;
-
-        SparseArray<TextBlock> textBlocks = textRecognizer.detect(imageFrame);
-
-        int n_of_opts = 0;
-        for (int i = 0; i < textBlocks.size(); i++) {
-            String text = textBlocks.get(textBlocks.keyAt(i)).getValue();
-            if (parsed){
-                if (n_of_opts < 3 && !text.contains("prize for") && !text.contains("$")) {
-                    opts += text.toLowerCase() + Constants.DELIMITER;
-                    n_of_opts++;
-                }
-            }
-            else if (text.length() > 24){
-                question = text;
-                parsed = true;
-            }
-        }
-
-        opts = opts.replaceAll("\n",Constants.DELIMITER);
-        if (opts.length() > 0)
-            opts = opts.substring(0, opts.length() - 1);
-        question = question.replaceAll("\n"," ");
-
-        Intent intent = new Intent();
-        intent.setAction(MY_ACTION);
-        intent.putExtra(Constants.QUESTION, question);
-        intent.putExtra(Constants.OPTIONS, opts);
-        sendBroadcast(intent);
-    }
-
-    public void googleVisionOCR(Bitmap questionBitmap, Bitmap optsBitmap){
-        TextRecognizer textRecognizer = new TextRecognizer.Builder(getApplicationContext()).build();
-        Frame questionFrame = new Frame.Builder()
-                .setBitmap(questionBitmap)
-                .build();
-
-        Frame optsFrame = new Frame.Builder()
-                .setBitmap(optsBitmap)
-                .build();
-
-        String question = "";
-        String opts = "";
-
-        SparseArray<TextBlock> questionBlocks = textRecognizer.detect(questionFrame);
-        SparseArray<TextBlock> optsBlocks = textRecognizer.detect(optsFrame);
-
-        for (int i = 0; i < questionBlocks.size(); i++) {
-            String text = questionBlocks.get(questionBlocks.keyAt(i)).getValue();
-            question += text;
-        }
-
-        for (int i = 0; i < optsBlocks.size(); i++) {
-            String text = optsBlocks.get(optsBlocks.keyAt(i)).getValue().toLowerCase();
-            for (String s : text.split("/")){
-                opts += s.trim() + Constants.DELIMITER;
-            }
-        }
-
-        if (opts.length() > 0)
-            opts = opts.substring(0, opts.length() - 1);
-        question = question.replaceAll("\n"," ");
-        opts = opts.replaceAll("\n",Constants.DELIMITER);
-
-        if (question.startsWith("Which of these"))
-            question = question.substring(15);
-
-        Intent intent = new Intent();
-        intent.setAction(MY_ACTION);
-        intent.putExtra(Constants.QUESTION, question);
-        intent.putExtra(Constants.OPTIONS, opts);
-        sendBroadcast(intent);
     }
 
     public void saveBitmap(Bitmap b, String filename) {

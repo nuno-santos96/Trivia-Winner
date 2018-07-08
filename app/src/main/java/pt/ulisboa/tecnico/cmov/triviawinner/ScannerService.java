@@ -5,12 +5,17 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.net.Uri;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
+import android.util.SparseArray;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -27,6 +32,10 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.crashlytics.android.Crashlytics;
+import com.google.android.gms.vision.Frame;
+import com.google.android.gms.vision.text.TextBlock;
+import com.google.android.gms.vision.text.TextRecognizer;
+import com.googlecode.tesseract.android.TessBaseAPI;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -47,6 +56,7 @@ public class ScannerService extends Service {
     private WindowManager mWindowManager;
     private View mChatHeadView;
     private String game = "";
+    private TessBaseAPI tessTwo;
     private BroadcastReceiver myReceiver;
     private Toast resultToast;
 
@@ -61,6 +71,10 @@ public class ScannerService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         game = intent.getStringExtra(Constants.GAME_TITLE);
+        String lang = intent.getStringExtra(Constants.GAME_LANG);
+        tessTwo = new TessBaseAPI();
+        tessTwo.init(Environment.getExternalStorageDirectory().toString(), lang);
+        tessTwo.setPageSegMode(2);
         return START_NOT_STICKY;
     }
 
@@ -79,9 +93,19 @@ public class ScannerService extends Service {
                     @Override
                     public void run() {
                         try  {
-                            String question = intent.getStringExtra(Constants.QUESTION);
-                            String opts = intent.getStringExtra(Constants.OPTIONS);
-                            googleSearch(question,opts);
+                            if (!game.equals(Constants.DEFAULT_GAME)) {
+                                byte[] byteArray = intent.getByteArrayExtra(Constants.QUESTION);
+                                Bitmap question = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
+                                byte[] byteArray2 = intent.getByteArrayExtra(Constants.OPTIONS);
+                                Bitmap opts = BitmapFactory.decodeByteArray(byteArray2, 0, byteArray2.length);
+                                tesseractOCR(question,opts);
+                                //googleVisionOCR(question,opts);
+                            } else {
+                                byte[] byteArray = intent.getByteArrayExtra(Constants.FULLSCREEN);
+                                Bitmap screenshot = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
+                                fullscreenOCR(screenshot);
+                            }
+
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -109,18 +133,8 @@ public class ScannerService extends Service {
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         mWindowManager.addView(mChatHeadView, params);
 
-        //Set the close button.
-        ImageView closeButton = mChatHeadView.findViewById(R.id.close_btn);
-        closeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //close the service and remove the chat head from the window
-                stopSelf();
-            }
-        });
-
         //Drag and move chat head using user's touch action.
-        final ImageView chatHeadImage = mChatHeadView.findViewById(R.id.chat_head_profile_iv);
+        final ImageView chatHeadImage = mChatHeadView.findViewById(R.id.chat_head);
 
         chatHeadImage.setOnTouchListener(new View.OnTouchListener() {
             private int lastAction;
@@ -176,6 +190,101 @@ public class ScannerService extends Service {
         super.onDestroy();
         if (mChatHeadView != null) mWindowManager.removeView(mChatHeadView);
         if (myReceiver != null) unregisterReceiver(myReceiver);
+        tessTwo.end();
+    }
+
+    public void tesseractOCR(Bitmap questionBitmap, Bitmap optsBitmap){
+        tessTwo.setImage(questionBitmap);
+        String question = tessTwo.getUTF8Text();
+
+        tessTwo.setImage(optsBitmap);
+        String opts = tessTwo.getUTF8Text();
+
+        question = question.replaceAll("\n"," ");
+        opts = opts.replaceAll("\n",Constants.DELIMITER);
+        opts = opts.replaceAll("/",Constants.DELIMITER);
+        opts = opts.toLowerCase();
+        if (question.startsWith("Which of these"))
+            question = question.substring(15);
+
+        Log.d("QUESTION",question);
+        Log.d("OPTIONS",opts);
+
+        googleSearch(question,opts);
+    }
+
+    public void googleVisionOCR(Bitmap questionBitmap, Bitmap optsBitmap){
+        TextRecognizer textRecognizer = new TextRecognizer.Builder(getApplicationContext()).build();
+        Frame questionFrame = new Frame.Builder()
+                .setBitmap(questionBitmap)
+                .build();
+
+        Frame optsFrame = new Frame.Builder()
+                .setBitmap(optsBitmap)
+                .build();
+
+        String question = "";
+        String opts = "";
+
+        SparseArray<TextBlock> questionBlocks = textRecognizer.detect(questionFrame);
+        SparseArray<TextBlock> optsBlocks = textRecognizer.detect(optsFrame);
+
+        for (int i = 0; i < questionBlocks.size(); i++) {
+            String text = questionBlocks.get(questionBlocks.keyAt(i)).getValue();
+            question += text;
+        }
+
+        for (int i = 0; i < optsBlocks.size(); i++) {
+            String text = optsBlocks.get(optsBlocks.keyAt(i)).getValue().toLowerCase();
+            for (String s : text.split("/")){
+                opts += s.trim() + Constants.DELIMITER;
+            }
+        }
+
+        if (opts.length() > 0)
+            opts = opts.substring(0, opts.length() - 1);
+        question = question.replaceAll("\n"," ");
+        opts = opts.replaceAll("\n",Constants.DELIMITER);
+
+        if (question.startsWith("Which of these"))
+            question = question.substring(15);
+
+        googleSearch(question,opts);
+    }
+
+    public void fullscreenOCR(Bitmap bitmap){
+        TextRecognizer textRecognizer = new TextRecognizer.Builder(getApplicationContext()).build();
+        Frame imageFrame = new Frame.Builder()
+                .setBitmap(bitmap)
+                .build();
+
+        String question = "";
+        String opts = "";
+        boolean parsed = false;
+
+        SparseArray<TextBlock> textBlocks = textRecognizer.detect(imageFrame);
+
+        int n_of_opts = 0;
+        for (int i = 0; i < textBlocks.size(); i++) {
+            String text = textBlocks.get(textBlocks.keyAt(i)).getValue();
+            if (parsed){
+                if (n_of_opts < 3 && !text.contains("prize for") && !text.contains("$")) {
+                    opts += text.toLowerCase() + Constants.DELIMITER;
+                    n_of_opts++;
+                }
+            }
+            else if (text.length() > 24){
+                question = text;
+                parsed = true;
+            }
+        }
+
+        opts = opts.replaceAll("\n",Constants.DELIMITER);
+        if (opts.length() > 0)
+            opts = opts.substring(0, opts.length() - 1);
+        question = question.replaceAll("\n"," ");
+
+        googleSearch(question,opts);
     }
 
     public void googleSearch(String question, String opts) {
