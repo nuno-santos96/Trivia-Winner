@@ -62,6 +62,16 @@
         android:onClick="onButtonClick"
         android:text="TheQ" />
 
+    <Button
+        android:id="@+id/button7"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="42dp"
+        android:onClick="onButtonClick"
+        android:text="Q12" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"

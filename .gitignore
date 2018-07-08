@@ -131,3 +131,6 @@ fabric.properties
 
 
 # End of https://www.gitignore.io/api/androidstudio
+.idea/codeStyles/Project.xml
+.idea/gradle.xml
+.idea/runConfigurations.xml

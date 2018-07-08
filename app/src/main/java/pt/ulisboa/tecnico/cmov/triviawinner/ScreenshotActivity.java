@@ -49,17 +49,22 @@ public class ScreenshotActivity extends Activity {
     private Bitmap bitmap = null;
     public static String MY_ACTION = "MY_ACTION";
 
+    //    x and y coords :  {x start,y start,x length, y length}
     private Double[] HQ_QUESTION_SIZES = new Double[] {0.0,0.17,1.0,0.25};
     private Double[] CS_QUESTION_SIZES = new Double[] {0.0,0.17,1.0,0.17};
     private Double[] HANGTIME_QUESTION_SIZES = new Double[] {0.0,0.3,0.45,0.7};
     private Double[] HYPSPORTS_QUESTION_SIZES = new Double[] {0.0,0.35,1.0,0.25};
     private Double[] THEQ_QUESTION_SIZES = new Double[] {0.0,0.42,1.0,0.22};
+    //private Double[] QTWELVE_QUESTION_SIZES = new Double[] {0.0,0.56,1.0,0.14};
+    private Double[] QTWELVE_QUESTION_SIZES = new Double[] {0.0,0.624,1.0,0.125};
 
     private Double[] HQ_OPTS_SIZES = new Double[] {0.0,0.42,1.0,0.35};
     private Double[] CS_OPTS_SIZES = new Double[] {0.0,0.39,1.0,0.35};
     private Double[] HANGTIME_OPTS_SIZES = new Double[] {0.45,0.3,0.55,0.7};
     private Double[] HYPSPORTS_OPTS_SIZES = new Double[] {0.0,0.6,1.0,0.4};
     private Double[] THEQ_OPTS_SIZES = new Double[] {0.0,0.65,1.0,0.35};
+    //private Double[] QTWELVE_OPTS_SIZES = new Double[] {0.0,0.7,1.0,0.3};
+    private Double[] QTWELVE_OPTS_SIZES = new Double[] {0.0,0.74,1.0,0.26};
 
     private String game = "";
     private HashMap<String,Double[]> question_sizes = new HashMap<>();
@@ -150,12 +155,14 @@ public class ScreenshotActivity extends Activity {
         question_sizes.put(Constants.HANGTIME, HANGTIME_QUESTION_SIZES);
         question_sizes.put(Constants.HYPSPORTS, HYPSPORTS_QUESTION_SIZES);
         question_sizes.put(Constants.THEQ, THEQ_QUESTION_SIZES);
+        question_sizes.put(Constants.QTWELVE, QTWELVE_QUESTION_SIZES);
 
         opts_sizes.put(Constants.HQ, HQ_OPTS_SIZES);
         opts_sizes.put(Constants.CASH_SHOW, CS_OPTS_SIZES);
         opts_sizes.put(Constants.HANGTIME, HANGTIME_OPTS_SIZES);
         opts_sizes.put(Constants.HYPSPORTS, HYPSPORTS_OPTS_SIZES);
         opts_sizes.put(Constants.THEQ, THEQ_OPTS_SIZES);
+        opts_sizes.put(Constants.QTWELVE, QTWELVE_OPTS_SIZES);
 
         // call for the projection manager
         mProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
