@@ -42,19 +42,10 @@
         android:text="CashShow Germany" />
 
     <Button
-        android:id="@+id/button5"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/button4"
-        android:contentDescription="CashShow/jpn"
-        android:onClick="onButtonClick"
-        android:text="CashShow Japan" />
-
-    <Button
         android:id="@+id/button6"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/button5"
+        android:layout_below="@+id/button4"
         android:contentDescription="Hangtime/eng"
         android:onClick="onButtonClick"
         android:text="Hangtime" />
@@ -85,14 +76,5 @@
         android:contentDescription="TheQ/eng"
         android:onClick="onButtonClick"
         android:text="TheQ" />
-
-    <Button
-        android:id="@+id/button10"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/button9"
-        android:contentDescription="Others/eng"
-        android:onClick="onButtonClick"
-        android:text="Others" />
 
 </RelativeLayout>

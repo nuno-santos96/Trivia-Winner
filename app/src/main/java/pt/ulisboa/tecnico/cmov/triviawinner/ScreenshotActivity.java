@@ -26,7 +26,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
 
 import io.fabric.sdk.android.Fabric;
 
@@ -45,26 +44,8 @@ public class ScreenshotActivity extends Activity {
     private Bitmap bitmap = null;
     public static String MY_ACTION = "MY_ACTION";
 
-    //    x and y coords :  {x start,y start,x length, y length}
-    private Double[] HQ_QUESTION_SIZES = new Double[] {0.0,0.17,1.0,0.25};
-    private Double[] CS_QUESTION_SIZES = new Double[] {0.0,0.17,1.0,0.17};
-    private Double[] HANGTIME_QUESTION_SIZES = new Double[] {0.0,0.3,0.45,0.7};
-    private Double[] HYPSPORTS_QUESTION_SIZES = new Double[] {0.0,0.35,1.0,0.25};
-    private Double[] THEQ_QUESTION_SIZES = new Double[] {0.0,0.42,1.0,0.22};
-    //private Double[] QTWELVE_QUESTION_SIZES = new Double[] {0.0,0.56,1.0,0.14};
-    private Double[] QTWELVE_QUESTION_SIZES = new Double[] {0.0,0.624,1.0,0.125};
-
-    private Double[] HQ_OPTS_SIZES = new Double[] {0.0,0.42,1.0,0.35};
-    private Double[] CS_OPTS_SIZES = new Double[] {0.0,0.39,1.0,0.35};
-    private Double[] HANGTIME_OPTS_SIZES = new Double[] {0.45,0.3,0.55,0.7};
-    private Double[] HYPSPORTS_OPTS_SIZES = new Double[] {0.0,0.6,1.0,0.4};
-    private Double[] THEQ_OPTS_SIZES = new Double[] {0.0,0.65,1.0,0.35};
-    //private Double[] QTWELVE_OPTS_SIZES = new Double[] {0.0,0.7,1.0,0.3};
-    private Double[] QTWELVE_OPTS_SIZES = new Double[] {0.0,0.74,1.0,0.26};
-
-    private String game = "";
-    private HashMap<String,Double[]> question_sizes = new HashMap<>();
-    private HashMap<String,Double[]> opts_sizes = new HashMap<>();
+    private double[] question_sizes;
+    private double[] opts_sizes;
 
     private class ImageAvailableListener implements ImageReader.OnImageAvailableListener {
         @Override
@@ -84,48 +65,38 @@ public class ScreenshotActivity extends Activity {
                         bitmap = Bitmap.createBitmap(mWidth + rowPadding / pixelStride, mHeight, Bitmap.Config.ARGB_8888);
                         bitmap.copyPixelsFromBuffer(buffer);
 
-                        if (!game.equals(Constants.DEFAULT_GAME)) {
-                            int image_width = bitmap.getWidth();
-                            int image_height = bitmap.getHeight();
-                            Double[] q_sizes = question_sizes.get(game);
-                            Double[] answers_sizes = opts_sizes.get(game);
-                            Bitmap question_image = Bitmap.createBitmap(bitmap, (int) (q_sizes[0] * image_width),
-                                                                                (int) (q_sizes[1] * image_height),
-                                                                                (int) (q_sizes[2] * image_width),
-                                                                                (int) (q_sizes[3] * image_height));
+                        int image_width = bitmap.getWidth();
+                        int image_height = bitmap.getHeight();
+                        Bitmap question_image = Bitmap.createBitmap(bitmap, (int) (question_sizes[0] * image_width),
+                                                                            (int) (question_sizes[1] * image_height),
+                                                                            (int) (question_sizes[2] * image_width),
+                                                                            (int) (question_sizes[3] * image_height));
 
-                            Bitmap opts_image = Bitmap.createBitmap(bitmap, (int) (answers_sizes[0] * image_width),
-                                                                            (int) (answers_sizes[1] * image_height),
-                                                                            (int) (answers_sizes[2] * image_width),
-                                                                            (int) (answers_sizes[3] * image_height));
+                        Bitmap opts_image = Bitmap.createBitmap(bitmap, (int) (opts_sizes[0] * image_width),
+                                                                        (int) (opts_sizes[1] * image_height),
+                                                                        (int) (opts_sizes[2] * image_width),
+                                                                        (int) (opts_sizes[3] * image_height));
 
+                        //saveBitmap(question_image,"Question.jpg");
+                        //saveBitmap(opts_image,"Opts.jpg");
 
-                            //saveBitmap(question_image,"Question.jpg");
-                            //saveBitmap(opts_image,"Opts.jpg");
+                        //Compress bitmaps to pass them to the service
+                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                        ByteArrayOutputStream stream2 = new ByteArrayOutputStream();
+                        question_image.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                        opts_image.compress(Bitmap.CompressFormat.PNG, 100, stream2);
+                        byte[] question = stream.toByteArray();
+                        byte[] opts = stream2.toByteArray();
 
-                            //Compress bitmaps to pass them to the service
-                            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                            ByteArrayOutputStream stream2 = new ByteArrayOutputStream();
-                            question_image.compress(Bitmap.CompressFormat.PNG, 100, stream);
-                            opts_image.compress(Bitmap.CompressFormat.PNG, 100, stream2);
-                            byte[] question = stream.toByteArray();
-                            byte[] opts = stream2.toByteArray();
+                        Intent intent = new Intent();
+                        intent.setAction(MY_ACTION);
+                        intent.putExtra(Constants.QUESTION,question);
+                        intent.putExtra(Constants.OPTIONS,opts);
+                        sendBroadcast(intent);
 
-                            Intent intent = new Intent();
-                            intent.setAction(MY_ACTION);
-                            intent.putExtra(Constants.QUESTION,question);
-                            intent.putExtra(Constants.OPTIONS,opts);
-                            sendBroadcast(intent);
-                        } else {
-                            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
-                            byte[] screenshot = stream.toByteArray();
-
-                            Intent intent = new Intent();
-                            intent.setAction(MY_ACTION);
-                            intent.putExtra(Constants.FULLSCREEN,screenshot);
-                            sendBroadcast(intent);
-                        }
+                        bitmap.recycle();
+                        question_image.recycle();
+                        opts_image.recycle();
 
                         stopProjection();
                     }
@@ -162,21 +133,8 @@ public class ScreenshotActivity extends Activity {
         Fabric.with(this, new Crashlytics());
         setContentView(R.layout.activity_screenshot);
 
-        game = getIntent().getStringExtra(Constants.GAME_TITLE);
-
-        question_sizes.put(Constants.HQ, HQ_QUESTION_SIZES);
-        question_sizes.put(Constants.CASH_SHOW, CS_QUESTION_SIZES);
-        question_sizes.put(Constants.HANGTIME, HANGTIME_QUESTION_SIZES);
-        question_sizes.put(Constants.HYPSPORTS, HYPSPORTS_QUESTION_SIZES);
-        question_sizes.put(Constants.THEQ, THEQ_QUESTION_SIZES);
-        question_sizes.put(Constants.QTWELVE, QTWELVE_QUESTION_SIZES);
-
-        opts_sizes.put(Constants.HQ, HQ_OPTS_SIZES);
-        opts_sizes.put(Constants.CASH_SHOW, CS_OPTS_SIZES);
-        opts_sizes.put(Constants.HANGTIME, HANGTIME_OPTS_SIZES);
-        opts_sizes.put(Constants.HYPSPORTS, HYPSPORTS_OPTS_SIZES);
-        opts_sizes.put(Constants.THEQ, THEQ_OPTS_SIZES);
-        opts_sizes.put(Constants.QTWELVE, QTWELVE_OPTS_SIZES);
+        question_sizes = getIntent().getDoubleArrayExtra(Constants.QUESTION_SIZES);
+        opts_sizes = getIntent().getDoubleArrayExtra(Constants.OPTIONS_SIZES);
 
         // call for the projection manager
         mProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
