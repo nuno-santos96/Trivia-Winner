@@ -11,6 +11,7 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -123,13 +124,24 @@ public class ScannerService extends Service {
         };
         LocalBroadcastManager.getInstance(this).registerReceiver(myReceiver, new IntentFilter(ScreenshotActivity.MY_ACTION));
 
-        //Add the view to the window.
-        final WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_PHONE,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                PixelFormat.TRANSLUCENT);
+        final WindowManager.LayoutParams params;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            //Add the view to the window.
+            params = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    PixelFormat.TRANSLUCENT);
+        } else {
+            //Add the view to the window.
+            params = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.TYPE_PHONE,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    PixelFormat.TRANSLUCENT);
+        }
 
         //Specify the chat head position
         params.gravity = Gravity.TOP | Gravity.LEFT;
