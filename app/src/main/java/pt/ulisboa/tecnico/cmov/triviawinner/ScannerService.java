@@ -1,5 +1,8 @@
 package pt.ulisboa.tecnico.cmov.triviawinner;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -12,6 +15,10 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -30,6 +37,7 @@ import com.android.volley.toolbox.Volley;
 import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.vision.text.TextRecognizer;
 
+import java.io.FileInputStream;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -68,9 +76,22 @@ public class ScannerService extends Service {
         return START_NOT_STICKY;
     }
 
+    private void showNotification() {
+        Notification notification = new NotificationCompat.Builder(this, "M_CH_ID")
+                .setContentTitle("Trivia Winner")
+                .setTicker("Trivia Winner")
+                .setContentText("Running")
+                .setSmallIcon(R.drawable.icon)
+                .setOngoing(true).build();
+        startForeground(101, notification);
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
+
+        showNotification();
+
         Fabric.with(this, new Crashlytics());
 
         //Inflate the chat head layout we created
@@ -82,21 +103,25 @@ public class ScannerService extends Service {
                 Thread thread = new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        byte[] byteArray = intent.getByteArrayExtra(Constants.QUESTION);
-                        Bitmap question = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
-                        byte[] byteArray2 = intent.getByteArrayExtra(Constants.OPTIONS);
-                        Bitmap opts = BitmapFactory.decodeByteArray(byteArray2, 0, byteArray2.length);
-                        readQuestionAndOpts(question, opts);
-                        question.recycle();
-                        opts.recycle();
+                        try {
+                            FileInputStream is = openFileInput(Constants.QUESTION);
+                            FileInputStream is2 = openFileInput(Constants.OPTIONS);
+                            Bitmap question = BitmapFactory.decodeStream(is);
+                            Bitmap opts = BitmapFactory.decodeStream(is2);
+                            is.close();
+                            is2.close();
+                            readQuestionAndOpts(question, opts);
+                            question.recycle();
+                            opts.recycle();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 });
                 thread.start();
             }
         };
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(ScreenshotActivity.MY_ACTION);
-        registerReceiver(myReceiver, intentFilter);
+        LocalBroadcastManager.getInstance(this).registerReceiver(myReceiver, new IntentFilter(ScreenshotActivity.MY_ACTION));
 
         //Add the view to the window.
         final WindowManager.LayoutParams params = new WindowManager.LayoutParams(
@@ -113,9 +138,17 @@ public class ScannerService extends Service {
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         mWindowManager.addView(mChatHeadView, params);
 
+        ImageView closeButton = mChatHeadView.findViewById(R.id.close_btn);
+        closeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                stopForeground(true);
+                stopSelf();
+            }
+        });
+
         //Drag and move chat head using user's touch action.
         final ImageView chatHeadImage = mChatHeadView.findViewById(R.id.chat_head);
-
         chatHeadImage.setOnTouchListener(new View.OnTouchListener() {
             private int lastAction;
             private int initialX;
@@ -169,10 +202,10 @@ public class ScannerService extends Service {
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
+        if (myReceiver != null) LocalBroadcastManager.getInstance(this).unregisterReceiver(myReceiver);
         if (mChatHeadView != null) mWindowManager.removeView(mChatHeadView);
-        if (myReceiver != null) unregisterReceiver(myReceiver);
         //tessTwo.end();
+        super.onDestroy();
     }
 
     public void readQuestionAndOpts(Bitmap questionBitmap, Bitmap optsBitmap) {
@@ -186,8 +219,8 @@ public class ScannerService extends Service {
         if (question.startsWith("Which of these"))
             question = question.substring(15);
 
-        System.out.println(question);
-        System.out.println(opts);
+        Log.e("Question", question);
+        Log.e("Opts", opts);
 
         search(question,opts);
     }

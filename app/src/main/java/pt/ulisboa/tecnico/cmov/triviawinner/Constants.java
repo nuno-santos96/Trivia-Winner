@@ -19,7 +19,7 @@ public class Constants {
     public static final String DELIMITER = "/";
 
     //x and y coords :  {x start,y start,x length, y length}
-    public static final double[] HQ_QUESTION_SIZES = new double[] {0.0,0.17,1.0,0.25};
+    public static final double[] HQ_QUESTION_SIZES = new double[] {0.0,0.15,1.0,0.28};
     public static final double[] CS_QUESTION_SIZES = new double[] {0.0,0.17,1.0,0.17};
     public static final double[] HANGTIME_QUESTION_SIZES = new double[] {0.0,0.3,0.45,0.7};
     public static final double[] HYPSPORTS_QUESTION_SIZES = new double[] {0.0,0.35,1.0,0.25};
@@ -27,7 +27,7 @@ public class Constants {
     //public static final double[] QTWELVE_QUESTION_SIZES = new double[] {0.0,0.56,1.0,0.14};
     public static final double[] QTWELVE_QUESTION_SIZES = new double[] {0.0,0.624,1.0,0.125};
 
-    public static final double[] HQ_OPTS_SIZES = new double[] {0.0,0.42,1.0,0.35};
+    public static final double[] HQ_OPTS_SIZES = new double[] {0.0,0.43,1.0,0.47};
     public static final double[] CS_OPTS_SIZES = new double[] {0.0,0.39,1.0,0.47};
     public static final double[] HANGTIME_OPTS_SIZES = new double[] {0.45,0.3,0.55,0.7};
     public static final double[] HYPSPORTS_OPTS_SIZES = new double[] {0.0,0.6,1.0,0.4};

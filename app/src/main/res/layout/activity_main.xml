@@ -10,6 +10,8 @@
         android:id="@+id/button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/textView"
         android:contentDescription="HQ/eng"
         android:onClick="onButtonClick"
         android:text="HQ" />
@@ -76,5 +78,13 @@
         android:contentDescription="TheQ/eng"
         android:onClick="onButtonClick"
         android:text="TheQ" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:text="Select game:" />
 
 </RelativeLayout>

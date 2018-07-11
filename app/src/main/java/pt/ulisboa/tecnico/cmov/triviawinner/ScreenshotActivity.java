@@ -16,13 +16,13 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Bundle;
 import android.os.Looper;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 
 import com.crashlytics.android.Crashlytics;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
@@ -32,6 +32,7 @@ import io.fabric.sdk.android.Fabric;
 public class ScreenshotActivity extends Activity {
 
     private int REQUEST_CODE = 100;
+    private int IMAGES_PRODUCED = 0;
     private MediaProjection sMediaProjection;
     private MediaProjectionManager mProjectionManager;
     private ImageReader mImageReader;
@@ -41,7 +42,6 @@ public class ScreenshotActivity extends Activity {
     private int mDensity;
     private int mWidth;
     private int mHeight;
-    private Bitmap bitmap = null;
     public static String MY_ACTION = "MY_ACTION";
 
     private double[] question_sizes;
@@ -51,7 +51,7 @@ public class ScreenshotActivity extends Activity {
         @Override
         public void onImageAvailable(ImageReader reader) {
             Image image = null;
-            if (bitmap == null) {
+            if (IMAGES_PRODUCED == 0) {
                 try {
                     image = reader.acquireLatestImage();
                     if (image != null) {
@@ -62,7 +62,7 @@ public class ScreenshotActivity extends Activity {
                         int rowPadding = rowStride - pixelStride * mWidth;
 
                         // create bitmap
-                        bitmap = Bitmap.createBitmap(mWidth + rowPadding / pixelStride, mHeight, Bitmap.Config.ARGB_8888);
+                        Bitmap bitmap = Bitmap.createBitmap(mWidth + rowPadding / pixelStride, mHeight, Bitmap.Config.ARGB_8888);
                         bitmap.copyPixelsFromBuffer(buffer);
 
                         int image_width = bitmap.getWidth();
@@ -77,27 +77,29 @@ public class ScreenshotActivity extends Activity {
                                                                         (int) (opts_sizes[2] * image_width),
                                                                         (int) (opts_sizes[3] * image_height));
 
-                        //saveBitmap(question_image,"Question.jpg");
-                        //saveBitmap(opts_image,"Opts.jpg");
+                        saveBitmap(question_image, "Question.jpg");
+                        saveBitmap(opts_image, "Opts.jpg");
 
-                        //Compress bitmaps to pass them to the service
-                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                        ByteArrayOutputStream stream2 = new ByteArrayOutputStream();
-                        question_image.compress(Bitmap.CompressFormat.PNG, 100, stream);
-                        opts_image.compress(Bitmap.CompressFormat.PNG, 100, stream2);
-                        byte[] question = stream.toByteArray();
-                        byte[] opts = stream2.toByteArray();
+                        try {
+                            FileOutputStream stream = getBaseContext().openFileOutput(Constants.QUESTION, Context.MODE_PRIVATE);
+                            question_image.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                            FileOutputStream stream2 = getBaseContext().openFileOutput(Constants.OPTIONS, Context.MODE_PRIVATE);
+                            opts_image.compress(Bitmap.CompressFormat.PNG, 100, stream2);
 
-                        Intent intent = new Intent();
-                        intent.setAction(MY_ACTION);
-                        intent.putExtra(Constants.QUESTION,question);
-                        intent.putExtra(Constants.OPTIONS,opts);
-                        sendBroadcast(intent);
+                            stream.close();
+                            stream2.close();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
 
-                        bitmap.recycle();
                         question_image.recycle();
                         opts_image.recycle();
+                        bitmap.recycle();
 
+                        Intent intent = new Intent(MY_ACTION);
+                        LocalBroadcastManager.getInstance(getBaseContext()).sendBroadcast(intent);
+
+                        IMAGES_PRODUCED++;
                         stopProjection();
                     }
                 } catch (Exception e) {
@@ -119,10 +121,14 @@ public class ScreenshotActivity extends Activity {
                 @Override
                 public void run() {
                     if (mVirtualDisplay != null) mVirtualDisplay.release();
-                    if (mImageReader != null) mImageReader.setOnImageAvailableListener(null, null);
+                    if (mImageReader != null){
+                        mImageReader.setOnImageAvailableListener(null, null);
+                        mImageReader.close();
+                    }
                     sMediaProjection.unregisterCallback(MediaProjectionStopCallback.this);
                 }
             });
+            finish();
         }
     }
 
@@ -189,7 +195,6 @@ public class ScreenshotActivity extends Activity {
                 }
             }
         });
-        finish();
     }
 
     /****************************************** Factoring Virtual Display creation ****************/
