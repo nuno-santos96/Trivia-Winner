@@ -34,4 +34,9 @@ public class Constants {
     public static final double[] THEQ_OPTS_SIZES = new double[] {0.0,0.65,1.0,0.35};
     //public static final double[] QTWELVE_OPTS_SIZES = new double[] {0.0,0.7,1.0,0.3};
     public static final double[] QTWELVE_OPTS_SIZES = new double[] {0.0,0.74,1.0,0.26};
+
+
+    //different dimensions for other person
+    //public static final double[] HQ_QUESTION_SIZES = new double[] {0.0,0.15,1.0,0.35};
+    //public static final double[] HQ_OPTS_SIZES = new double[] {0.0,0.50,1.0,0.42};
 }
