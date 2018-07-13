@@ -10,7 +10,7 @@
 
 # How to use:
 
--Download and install 'TriviaWinenr.apk' from the repository.
+-Download and install 'TriviaWinner.apk' from the repository.
 
 -Select game.
 
