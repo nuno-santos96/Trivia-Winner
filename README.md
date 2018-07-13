@@ -10,6 +10,8 @@
 
 # How to use:
 
+-Download and install 'TriviaWinenr.apk' from the repository.
+
 -Select game.
 
 -Press the icon to scan the screen.
