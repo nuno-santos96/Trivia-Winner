@@ -12,6 +12,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.os.Build;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -311,6 +312,17 @@ public class ScannerService extends Service {
             resultToast.setText(toast);
             resultToast.setDuration(Toast.LENGTH_LONG);
             resultToast.show();
+
+            CountDownTimer toastCountDown;
+            toastCountDown = new CountDownTimer(5000, 1000 /*Tick duration*/) {
+                public void onTick(long millisUntilFinished) {
+                    resultToast.show();
+                }
+                public void onFinish() {
+                    resultToast.cancel();
+                }
+            };
+            toastCountDown.start();
         }
     };
 
