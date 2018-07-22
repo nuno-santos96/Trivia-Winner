@@ -46,10 +46,4 @@ public class OCR {
 
         return result;
     }
-
-    //Tesseract OCR
-    /*public static String tesseractOCR(TessBaseAPI tessTwo, Bitmap image) {
-        tessTwo.setImage(image);
-        return tessTwo.getUTF8Text();
-    }*/
 }

@@ -1,8 +1,6 @@
 package pt.ulisboa.tecnico.cmov.triviawinner;
 
 import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -18,7 +16,6 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Gravity;
@@ -54,7 +51,6 @@ public class ScannerService extends Service {
     private String game = "";
     private double[] question_sizes;
     private double[] opts_sizes;
-    //private TessBaseAPI tessTwo;
     private TextRecognizer textRecognizer;
     private BroadcastReceiver myReceiver;
     private Toast resultToast;
@@ -72,8 +68,6 @@ public class ScannerService extends Service {
         game = intent.getStringExtra(Constants.GAME_TITLE);
         find_sizes(game);
         String lang = intent.getStringExtra(Constants.GAME_LANG);
-        //tessTwo = new TessBaseAPI();
-        //tessTwo.init(Environment.getExternalStorageDirectory().toString(), lang);
         textRecognizer = new TextRecognizer.Builder(getApplicationContext()).build();
         return START_NOT_STICKY;
     }
@@ -217,7 +211,6 @@ public class ScannerService extends Service {
     public void onDestroy() {
         if (myReceiver != null) LocalBroadcastManager.getInstance(this).unregisterReceiver(myReceiver);
         if (mChatHeadView != null) mWindowManager.removeView(mChatHeadView);
-        //tessTwo.end();
         super.onDestroy();
     }
 
@@ -309,18 +302,17 @@ public class ScannerService extends Service {
             String toast = (String) toastMessage.obj;
             if(resultToast == null)
                 resultToast = Toast.makeText(getBaseContext(), toast, Toast.LENGTH_LONG);
-            resultToast.setText(toast);
-            resultToast.setDuration(Toast.LENGTH_LONG);
+            else
+                resultToast.setText(toast);
+
             resultToast.show();
 
             CountDownTimer toastCountDown;
-            toastCountDown = new CountDownTimer(5000, 1000 /*Tick duration*/) {
+            toastCountDown = new CountDownTimer(5000, 200 /*Tick duration*/) {
                 public void onTick(long millisUntilFinished) {
                     resultToast.show();
                 }
-                public void onFinish() {
-                    resultToast.cancel();
-                }
+                public void onFinish() {}
             };
             toastCountDown.start();
         }
