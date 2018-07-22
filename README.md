@@ -1,51 +1,53 @@
 # Trivia-Winner
 
-# How it works
+## How it works
 
--First, takes a screenshot of the whole screen, and crops it for the question and options regions.
+First, takes a screenshot of the whole screen, and crops it for the question and options regions.
 
--Next, uses an OCR (google mobile vision api) to read the text from the question and options image.
+Next, uses an OCR (google mobile vision api) to read the text from the question and options image.
 
--Then, it google search the question and counts the occurences of each option in the 10 first results of the search.
+Then, it google search the question and counts the occurences of each option in the 10 first results of the search.
 
-# How to use:
+## How to use:
 
--Select game.
+Download and install 'TriviaWinner.apk' from the repository.
 
--Press the icon to scan the screen.
+Select game.
 
--After a few seconds, a message will apear in the bottom of the screen.
+Press the icon to scan the screen.
 
--The message shows the ocurrence of each option in a google search.
+After a few seconds, a message will apear in the bottom of the screen.
 
-# Details:
+The message shows the ocurrence of each option in a google search.
 
--The screenshots taken are in the files of your device under the directory 'Captures'. Check them if the scan is not working properly.
+## Details:
 
--Hangtime must be played in horizontal mode.
+The screenshots taken are in the files of your device under the directory 'Captures'. Check them if the scan is not working properly.
 
--When is a 'not' question try going for the option with less or 0 ocurrences.
+Hangtime must be played in horizontal mode.
 
--App is more accurate with questions that are easy to google, so try to make your own choice.
+When is a 'not' question try going for the option with less or 0 ocurrences.
 
-# Permissions
+App is more accurate with questions that are easy to google, so try to make your own choice.
 
--Draw Overlay - To take the screenshot
+## Permissions
 
--Storage - To store the screenshot
+Draw Overlay - To take the screenshot
 
--Internet - To the google search
+Storage - To store the screenshot
 
-# Games supported
+Internet - To the google search
 
--HQ
+## Games supported
 
--Cash Show (US/UK/AUS/FR/GER)
+* HQ
 
--Hangtime
+* Cash Show (US/UK/AUS/FR/GER)
 
--Q12
+* Hangtime
 
--Hypsports
+* Q12
 
--TheQ
+* Hypsports
+
+* TheQ
