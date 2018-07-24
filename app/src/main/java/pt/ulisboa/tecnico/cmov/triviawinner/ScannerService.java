@@ -67,7 +67,6 @@ public class ScannerService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         game = intent.getStringExtra(Constants.GAME_TITLE);
         find_sizes(game);
-        String lang = intent.getStringExtra(Constants.GAME_LANG);
         textRecognizer = new TextRecognizer.Builder(getApplicationContext()).build();
         return START_NOT_STICKY;
     }
@@ -78,7 +77,7 @@ public class ScannerService extends Service {
                 .setTicker("Trivia Winner")
                 .setContentText("Running")
                 .setSmallIcon(R.drawable.icon)
-                .setOngoing(true).build();
+                .build();
         startForeground(101, notification);
     }
 
@@ -100,15 +99,24 @@ public class ScannerService extends Service {
                     @Override
                     public void run() {
                         try {
-                            FileInputStream is = openFileInput(Constants.QUESTION);
-                            FileInputStream is2 = openFileInput(Constants.OPTIONS);
-                            Bitmap question = BitmapFactory.decodeStream(is);
-                            Bitmap opts = BitmapFactory.decodeStream(is2);
-                            is.close();
-                            is2.close();
-                            readQuestionAndOpts(question, opts);
-                            question.recycle();
-                            opts.recycle();
+                            if (game.equals(Constants.HQ)){
+                                FileInputStream is = openFileInput(Constants.HQ);
+                                Bitmap hq = BitmapFactory.decodeStream(is);
+                                is.close();
+                                readHQ(hq);
+                                hq.recycle();
+                            } else {
+                                FileInputStream is = openFileInput(Constants.QUESTION);
+                                FileInputStream is2 = openFileInput(Constants.OPTIONS);
+                                Bitmap question = BitmapFactory.decodeStream(is);
+                                Bitmap opts = BitmapFactory.decodeStream(is2);
+                                is.close();
+                                is2.close();
+                                readQuestionAndOpts(question, opts);
+                                question.recycle();
+                                opts.recycle();
+                            }
+
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -219,7 +227,35 @@ public class ScannerService extends Service {
         String opts = OCR.googleVision(textRecognizer, optsBitmap);
 
         question = question.replaceAll("\n"," ");
+        question = question.replaceAll(Constants.DELIMITER," ");
+        opts = opts.replaceAll("&",Constants.DELIMITER);
         opts = opts.replaceAll("\n",Constants.DELIMITER);
+        opts = opts.toLowerCase();
+        if (question.startsWith("Which of these"))
+            question = question.substring(15);
+
+        Log.e("Question", question);
+        Log.e("Opts", opts);
+
+        search(question,opts);
+    }
+
+    public void readHQ(Bitmap hq) {
+        String question = "";
+        String opts = "";
+        String text = OCR.googleVision(textRecognizer, hq);
+
+        text = text.replaceAll("\n", Constants.DELIMITER);
+
+        String[] words = text.split(Constants.DELIMITER);
+
+        if (words.length >= 3)
+            opts = words[words.length-3] + Constants.DELIMITER + words[words.length-2] + Constants.DELIMITER + words[words.length-1];
+
+        for (int i = 0; i < words.length - 3; i++)
+            question += words[i] + " ";
+        if (question.length() > 0) question = question.substring(0, question.length() - 1);
+
         opts = opts.replaceAll("&",Constants.DELIMITER);
         opts = opts.toLowerCase();
         if (question.startsWith("Which of these"))

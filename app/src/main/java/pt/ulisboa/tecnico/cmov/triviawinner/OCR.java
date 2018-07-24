@@ -41,7 +41,7 @@ public class OCR {
 
         String result = "";
         for (Map.Entry<TextBlock, Integer> entry : list)
-            result += entry.getKey().getValue() + "\n";
+            result += entry.getKey().getValue() + Constants.DELIMITER;
         if (result.length() > 0) result = result.substring(0, result.length() - 1);
 
         return result;

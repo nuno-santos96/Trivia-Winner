@@ -71,10 +71,8 @@ public class MainActivity extends Activity {
     public void onButtonClick(View v){
         Button b = (Button) v;
         Intent i = new Intent(this, ScannerService.class);
-        String game = b.getContentDescription().toString().split(Constants.DELIMITER)[0];
-        String language = b.getContentDescription().toString().split(Constants.DELIMITER)[1];
+        String game = b.getContentDescription().toString();
         i.putExtra(Constants.GAME_TITLE,game);
-        i.putExtra(Constants.GAME_LANG,language);
         startService(i);
         finish();
     }

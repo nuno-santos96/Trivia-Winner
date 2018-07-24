@@ -44,6 +44,7 @@ public class ScreenshotActivity extends Activity {
     private int mHeight;
     public static String MY_ACTION = "MY_ACTION";
 
+    private String game;
     private double[] question_sizes;
     private double[] opts_sizes;
 
@@ -67,33 +68,53 @@ public class ScreenshotActivity extends Activity {
 
                         int image_width = bitmap.getWidth();
                         int image_height = bitmap.getHeight();
-                        Bitmap question_image = Bitmap.createBitmap(bitmap, (int) (question_sizes[0] * image_width),
-                                                                            (int) (question_sizes[1] * image_height),
-                                                                            (int) (question_sizes[2] * image_width),
-                                                                            (int) (question_sizes[3] * image_height));
+                        if (game.equals(Constants.HQ)){
+                            Bitmap hq_image = Bitmap.createBitmap(bitmap, (int) (Constants.HQ_SIZES[0] * image_width),
+                                    (int) (Constants.HQ_SIZES[1] * image_height),
+                                    (int) (Constants.HQ_SIZES[2] * image_width),
+                                    (int) (Constants.HQ_SIZES[3] * image_height));
 
-                        Bitmap opts_image = Bitmap.createBitmap(bitmap, (int) (opts_sizes[0] * image_width),
-                                                                        (int) (opts_sizes[1] * image_height),
-                                                                        (int) (opts_sizes[2] * image_width),
-                                                                        (int) (opts_sizes[3] * image_height));
+                            saveBitmap(hq_image, "HQ.jpg");
 
-                        saveBitmap(question_image, "Question.jpg");
-                        saveBitmap(opts_image, "Opts.jpg");
+                            try {
+                                FileOutputStream stream = getBaseContext().openFileOutput(Constants.HQ, Context.MODE_PRIVATE);
+                                hq_image.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                                stream.close();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
 
-                        try {
-                            FileOutputStream stream = getBaseContext().openFileOutput(Constants.QUESTION, Context.MODE_PRIVATE);
-                            question_image.compress(Bitmap.CompressFormat.PNG, 100, stream);
-                            FileOutputStream stream2 = getBaseContext().openFileOutput(Constants.OPTIONS, Context.MODE_PRIVATE);
-                            opts_image.compress(Bitmap.CompressFormat.PNG, 100, stream2);
+                            hq_image.recycle();
+                        } else {
+                            Bitmap question_image = Bitmap.createBitmap(bitmap, (int) (question_sizes[0] * image_width),
+                                    (int) (question_sizes[1] * image_height),
+                                    (int) (question_sizes[2] * image_width),
+                                    (int) (question_sizes[3] * image_height));
 
-                            stream.close();
-                            stream2.close();
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                            Bitmap opts_image = Bitmap.createBitmap(bitmap, (int) (opts_sizes[0] * image_width),
+                                    (int) (opts_sizes[1] * image_height),
+                                    (int) (opts_sizes[2] * image_width),
+                                    (int) (opts_sizes[3] * image_height));
+
+                            saveBitmap(question_image, "Question.jpg");
+                            saveBitmap(opts_image, "Opts.jpg");
+
+                            try {
+                                FileOutputStream stream = getBaseContext().openFileOutput(Constants.QUESTION, Context.MODE_PRIVATE);
+                                question_image.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                                FileOutputStream stream2 = getBaseContext().openFileOutput(Constants.OPTIONS, Context.MODE_PRIVATE);
+                                opts_image.compress(Bitmap.CompressFormat.PNG, 100, stream2);
+
+                                stream.close();
+                                stream2.close();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+
+                            question_image.recycle();
+                            opts_image.recycle();
                         }
 
-                        question_image.recycle();
-                        opts_image.recycle();
                         bitmap.recycle();
 
                         Intent intent = new Intent(MY_ACTION);
@@ -139,6 +160,7 @@ public class ScreenshotActivity extends Activity {
         Fabric.with(this, new Crashlytics());
         setContentView(R.layout.activity_screenshot);
 
+        game = getIntent().getStringExtra(Constants.GAME_TITLE);
         question_sizes = getIntent().getDoubleArrayExtra(Constants.QUESTION_SIZES);
         opts_sizes = getIntent().getDoubleArrayExtra(Constants.OPTIONS_SIZES);
 
