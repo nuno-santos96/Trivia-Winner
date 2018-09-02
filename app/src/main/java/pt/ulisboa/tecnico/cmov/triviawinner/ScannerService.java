@@ -380,6 +380,14 @@ public class ScannerService extends Service {
                 question_sizes = Constants.QTWELVE_QUESTION_SIZES;
                 opts_sizes = Constants.QTWELVE_OPTS_SIZES;
                 break;
+            case Constants.FLASHBREAK:
+                question_sizes = Constants.FLASHBREAK_QUESTION_SIZES;
+                opts_sizes = Constants.FLASHBREAK_OPTS_SIZES;
+                break;
+            case Constants.QUIDOL:
+                question_sizes = Constants.QUIDOL_QUESTION_SIZES;
+                opts_sizes = Constants.QUIDOL_OPTS_SIZES;
+                break;
         }
     }
 }
