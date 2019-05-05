@@ -388,6 +388,14 @@ public class ScannerService extends Service {
                 question_sizes = Constants.QUIDOL_QUESTION_SIZES;
                 opts_sizes = Constants.QUIDOL_OPTS_SIZES;
                 break;
+            case Constants.TRIVAA:
+                question_sizes = Constants.TRIVAA_QUESTION_SIZES;
+                opts_sizes = Constants.TRIVAA_OPTS_SIZES;
+                break;
+            case Constants.SWAGBUCKS:
+                question_sizes = Constants.SWAGBUCKS_QUESTION_SIZES;
+                opts_sizes = Constants.SWAGBUCKS_OPTS_SIZES;
+                break;
         }
     }
 }
